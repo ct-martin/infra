@@ -13,4 +13,4 @@ spec:
   source:
     repoURL: https://github.com/ct-martin/infra.git
     targetRevision: main
-    path: argocd-apps/nodes/data/apps/cloudflared
+    path: argocd-apps/nodes/data/cloudflared
