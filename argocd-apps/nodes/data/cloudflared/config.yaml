@@ -22,7 +22,7 @@ data:
     no-autoupdate: true
     # Placeholder Ingress (will be superseded by remote management)
     ingress:
-      service: http_status:404
+      - service: http_status:404
     # WARP Routing for IP route
     warp-routing:
       enabled: true
