@@ -4,3 +4,10 @@ metadata:
   name: cloudflared
   labels:
     name: cloudflared
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: airbyte
+  labels:
+    name: airbyte
