@@ -19,7 +19,7 @@ spec:
         pathType: ImplementationSpecific
         backend:
           service:
-            name: airbyte-server
+            name: airbyte-webapp-svc
             port:
               number: 80
   - host: data-airbyte.ctmartin.me
@@ -29,6 +29,6 @@ spec:
         pathType: ImplementationSpecific
         backend:
           service:
-            name: airbyte-server
+            name: airbyte-webapp-svc
             port:
               number: 80
