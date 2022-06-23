@@ -3,6 +3,4 @@ kind: Kustomization
 
 resources:
   - base/ingress.yaml
-
-bases:
   - https://github.com/airbytehq/airbyte.git/kube/overlays/stable?ref=master
