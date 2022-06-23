@@ -20,8 +20,6 @@ spec:
         backend:
           service:
             name: airbyte-webapp-svc
-            port:
-              number: 80
   - host: data-airbyte.ctmartin.me
     http:
       paths:
@@ -30,5 +28,3 @@ spec:
         backend:
           service:
             name: airbyte-webapp-svc
-            port:
-              number: 80
