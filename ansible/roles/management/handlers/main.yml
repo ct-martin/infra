@@ -1,6 +1,6 @@
 ---
 - name: restart_nextdns
-  become: yes
+  become: true
   ansible.builtin.systemd:
     name: nextdns
     state: restarted

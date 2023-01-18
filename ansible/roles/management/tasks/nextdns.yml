@@ -1,58 +1,58 @@
 ---
 - name: Add NextDNS Signing Key
-  become: yes
+  become: true
   ansible.builtin.apt_key:
     url: "https://repo.nextdns.io/nextdns.gpg"
     state: present
     keyring: /usr/share/keyrings/nextdns.gpg
 - name: Add NextDNS Repo
-  become: yes
+  become: true
   ansible.builtin.apt_repository:
     filename: nextdns
     repo: "deb [signed-by=/usr/share/keyrings/nextdns.gpg] https://repo.nextdns.io/deb stable main"
 - name: Install NextDNS
-  become: yes
+  become: true
   ansible.builtin.apt:
     name: nextdns
     state: present
     update_cache: true
 - name: Configure NextDNS ID
-  become: yes
+  become: true
   lineinfile:
     path: /etc/nextdns.conf
     line: "config 86b393"
     regexp: '^config '
   notify: restart_nextdns
 - name: Configure NextDNS Cache Size
-  become: yes
+  become: true
   lineinfile:
     path: /etc/nextdns.conf
     line: "cache-size 10MB"
     regexp: '^cache-size '
   notify: restart_nextdns
 - name: Configure NextDNS Max TTL
-  become: yes
+  become: true
   lineinfile:
     path: /etc/nextdns.conf
     line: "max-ttl 5s"
     regexp: '^max-ttl '
   notify: restart_nextdns
 - name: Configure NextDNS Reporting
-  become: yes
+  become: true
   lineinfile:
     path: /etc/nextdns.conf
     line: "report-client-info true"
     regexp: '^report-client-info '
   notify: restart_nextdns
 - name: Configure NextDNS auto-activate
-  become: yes
+  become: true
   lineinfile:
     path: /etc/nextdns.conf
     line: "auto-activate true"
     regexp: '^auto-activate '
   notify: restart_nextdns
 - name: Disable NextDNS mDNS
-  become: yes
+  become: true
   lineinfile:
     path: /etc/nextdns.conf
     line: "mdns disabled"

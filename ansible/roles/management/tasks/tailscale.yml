@@ -1,23 +1,23 @@
 ---
 - name: Add Tailscale Signing Key
-  become: yes
+  become: true
   ansible.builtin.apt_key:
     url: "https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }}/{{ ansible_distribution_release }}.noarmor.gpg"
     state: present
     keyring: /usr/share/keyrings/tailscale-archive-keyring.gpg
 - name: Add Tailscale Repo
-  become: yes
+  become: true
   ansible.builtin.apt_repository:
     filename: tailscale
     repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"
 - name: Install Tailscale
-  become: yes
+  become: true
   ansible.builtin.apt:
     name: tailscale
     state: present
     update_cache: true
 - name: Run Tailscale
-  become: yes
+  become: true
   vars:
     tskey: ''
   when: "'tailscale0' not in ansible_interfaces"
