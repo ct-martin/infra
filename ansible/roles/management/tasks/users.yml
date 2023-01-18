@@ -9,9 +9,10 @@
   ansible.builtin.user:
     name: c
     state: present
+    shell: /usr/bin/bash
     password: '$6$wpiDTcDDyiWISyhG$qXCLJ6jWKr.ODpFTKfG9qamxawkvECC6PeGGvCZmA4z0AIR3mlb6hRd6DMRotBOVMoyUP83/YGkZQzGWeGp1o1'
     create_home: true
-- name: Add SSH Keys
+- name: "Add c's SSH Keys"
   become: yes
   ansible.posix.authorized_key:
     user: c
