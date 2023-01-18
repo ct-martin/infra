@@ -1,0 +1,23 @@
+---
+- name: SSH - Prohibit empty passwords
+  become: yes
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    line: "PermitEmptyPasswords no"
+    regexp: '^PermitEmptyPasswords '
+    insertafter: '#PermitEmptyPasswords'
+- name: SSH - Enable Logging
+  become: yes
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    line: "LogLevel INFO"
+    regexp: '^LogLevel '
+    insertafter: '#LogLevel'
+- name: SSH - Enable Pubkey Authentication
+  become: yes
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    line: "PubkeyAuthentication yes"
+    regexp: '^PubkeyAuthentication '
+    insertafter: '#PubkeyAuthentication'
+

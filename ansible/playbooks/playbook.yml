@@ -1,0 +1,11 @@
+---
+- hosts: all
+  name: "Basic Configuration"
+  roles:
+  - ../roles/management
+  - ../roles/security
+#- hosts:
+#  - web.ctmartin.me
+#  name: "Set up web environment"
+#  roles:
+#  - ../roles/web-custom
