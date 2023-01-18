@@ -1,0 +1,18 @@
+---
+- name: Set root password
+  ansible.builtin.user:
+    name: root
+    #password: 'WESW&DtS&Sn#4hoW*fbthyi9^6Au'
+    password: '$6$tObEqq1ujliq9$9.ZCprDNfGn/wsOd8VkDuNw85Ar/WXbDEPjGb0YrjeONNc9JX7Yp9X4lz98xtDTDK.YWc.FRyQkeO3wq.2dzL/'
+- name: Create "c" user
+  ansible.builtin.user:
+    name: c
+    state: present
+    #password: 'q!P36$Qx2dYy2zmXqdUveQua&Z%^'
+    password: '$6$0hmmNhiq.R$T28XQVfHJB.KciCelUPwQ7Lkt.MA7aiGEHBbgnkxlrnCdtntatQkH8UYT88UejZzHDIGzSOsb9SW9HYL71P9O.'
+    create_home: true
+- name: Give sudo access
+  ansible.builtin.user:
+    name: c
+    groups: sudo
+    append: yes
