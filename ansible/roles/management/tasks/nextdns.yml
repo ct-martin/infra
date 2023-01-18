@@ -16,10 +16,50 @@
     name: nextdns
     state: present
     update_cache: true
-- name: Populate service facts
-  service_facts:
-- name: Install NextDNS
+- name: Configure NextDNS ID
   become: yes
-  when: "'nextdns.service' not in services"
-  ansible.builtin.command:
-    cmd: "nextdns install -config 86b393 -cache-size 10MB -max-ttl 5s -report-client-info -auto-activate -mdns disabled"
+  lineinfile:
+    path: /etc/nextdns.conf
+    line: "config 86b393"
+    regexp: '^config '
+  notify: restart_nextdns
+- name: Configure NextDNS Cache Size
+  become: yes
+  lineinfile:
+    path: /etc/nextdns.conf
+    line: "cache-size 10MB"
+    regexp: '^cache-size '
+  notify: restart_nextdns
+- name: Configure NextDNS Max TTL
+  become: yes
+  lineinfile:
+    path: /etc/nextdns.conf
+    line: "max-ttl 5s"
+    regexp: '^max-ttl '
+  notify: restart_nextdns
+- name: Configure NextDNS Reporting
+  become: yes
+  lineinfile:
+    path: /etc/nextdns.conf
+    line: "report-client-info true"
+    regexp: '^report-client-info '
+  notify: restart_nextdns
+- name: Configure NextDNS auto-activate
+  become: yes
+  lineinfile:
+    path: /etc/nextdns.conf
+    line: "auto-activate true"
+    regexp: '^auto-activate '
+  notify: restart_nextdns
+- name: Disable NextDNS mDNS
+  become: yes
+  lineinfile:
+    path: /etc/nextdns.conf
+    line: "mdns disabled"
+    regexp: '^mdns '
+  notify: restart_nextdns
+- name: Ensure NextDNS is enabled & running
+  ansible.builtin.systemd:
+    name: nextdns
+    state: started
+    enabled: true

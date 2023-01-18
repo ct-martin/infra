@@ -1,0 +1,5 @@
+---
+- name: restart_nextdns
+  systemd_service:
+    name: nextdns
+    state: restarted
