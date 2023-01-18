@@ -7,15 +7,15 @@
     state: latest
     update_cache: true
 - name: Check if reboot needed
-  register: stat_reboot_required
   ansible.builtin.stat:
     path: /var/run/reboot-required
     get_checksum: no
+  register: stat_reboot_required
 - name: Requesting reboot
   debug:
-    msg: Reboot required, handler notified
+    msg: 'Reboot requested (handler notified)'
   notify: reboot
-  when: stat_reboot_required.stat.exists is true
+  when: stat_reboot_required.stat.exists
 - name: Install common packages
   become: true
   ansible.builtin.apt:
