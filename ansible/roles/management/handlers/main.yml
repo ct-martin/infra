@@ -4,3 +4,6 @@
   ansible.builtin.systemd:
     name: nextdns
     state: restarted
+- name: reboot
+  become: true
+  ansible.builtin.reboot:
