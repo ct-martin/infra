@@ -1,7 +1,7 @@
 ---
 - name: Add Tailscale Signing Key
   ansible.builtin.apt_key:
-    url: "https://pkgs.tailscale.com/stable/{{ ansible_distribution }}/{{ ansible_distribution_release }}.noarmor.gpg"
+    url: "https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }}/{{ ansible_distribution_release }}.noarmor.gpg"
     state: present
     keyring: /usr/share/keyrings/tailscale-archive-keyring.gpg
 - name: Install Tailscale Repo
