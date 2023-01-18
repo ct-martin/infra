@@ -1,15 +1,18 @@
 ---
 - name: Set root password
+  become: yes
   ansible.builtin.user:
     name: root
     password: '$6$OPP1.dtar/$waWlVZmQAoRxEBYGPIAZUAZfm11Dicz5cQqGIWEmrEeZXTUO9Ac.PFauACqG6ztw11Aj3b.WO59diSfe6FYcU1'
 - name: Create "c" user
+  become: yes
   ansible.builtin.user:
     name: c
     state: present
     password: '$6$wpiDTcDDyiWISyhG$qXCLJ6jWKr.ODpFTKfG9qamxawkvECC6PeGGvCZmA4z0AIR3mlb6hRd6DMRotBOVMoyUP83/YGkZQzGWeGp1o1'
     create_home: true
 - name: Add SSH Keys
+  become: yes
   ansible.posix.authorized_key:
     user: c
     state: present
@@ -18,6 +21,7 @@
       ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMOc0g+XN2/dzgjBMSiHQFREkWO2tkq3Awk+8G4e4G+G c@pop-os
       ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIYrgApudO3FokRWO5mTmptNtvHnPI4tuzPow7NoxoKS cctma@PROUD
 - name: Give sudo access
+  become: yes
   ansible.builtin.user:
     name: c
     groups: sudo
