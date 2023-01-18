@@ -8,7 +8,8 @@
 - name: Install Tailscale Repo
   become: yes
   ansible.builtin.apt_repository:
-    repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/{{ ansible_distribution }} {{ ansible_distribution_release }} main"
+    filename: tailscale
+    repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"
 - name: Install Tailscale
   become: yes
   ansible.builtin.apt:
