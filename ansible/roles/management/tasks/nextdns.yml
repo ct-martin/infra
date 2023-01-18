@@ -1,0 +1,25 @@
+---
+- name: Add NextDNS Signing Key
+  become: yes
+  ansible.builtin.apt_key:
+    url: "https://repo.nextdns.io/nextdns.gpg"
+    state: present
+    keyring: /usr/share/keyrings/nextdns.gpg
+- name: Add NextDNS Repo
+  become: yes
+  ansible.builtin.apt_repository:
+    filename: nextdns
+    repo: "deb [signed-by=/usr/share/keyrings/nextdns.gpg] https://repo.nextdns.io/deb stable main"
+- name: Install NextDNS
+  become: yes
+  ansible.builtin.apt:
+    name: nextdns
+    state: present
+    update_cache: true
+- name: Populate service facts
+  service_facts:
+- name: Install NextDNS
+  become: yes
+  when: "'nextdns.service' not in services"
+  ansible.builtin.command:
+    cmd: "nextdns install -config 86b393 -cache-size 10MB -max-ttl 5s -report-client-info -auto-activate -mdns disabled"
