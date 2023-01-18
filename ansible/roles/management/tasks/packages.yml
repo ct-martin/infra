@@ -6,11 +6,14 @@
     autoremove: true
     state: latest
     update_cache: true
-- name: Request reboot if required
-  debug:
-    msg: Reboot is needed
+- name: Check if reboot needed
+  register: stat_reboot_required
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+    get_checksum: no
+- name: Requesting reboot
   notify: reboot
-  when: "{{ '/var/run/reboot-required' is file }}"
+  when: stat_reboot_required.stat.exists is true
 - name: Install common packages
   become: true
   ansible.builtin.apt:
