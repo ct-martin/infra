@@ -6,6 +6,7 @@
     line: "PermitEmptyPasswords no"
     regexp: '^PermitEmptyPasswords '
     insertafter: '#PermitEmptyPasswords'
+  notify: restart_ssh_server
 - name: SSH - Enable Logging
   become: true
   lineinfile:
@@ -13,6 +14,7 @@
     line: "LogLevel INFO"
     regexp: '^LogLevel '
     insertafter: '#LogLevel'
+  notify: restart_ssh_server
 - name: SSH - Enable Pubkey Authentication
   become: true
   lineinfile:
@@ -20,6 +22,7 @@
     line: "PubkeyAuthentication yes"
     regexp: '^PubkeyAuthentication '
     insertafter: '#PubkeyAuthentication'
+  notify: restart_ssh_server
 - name: SSH - Disable root login
   become: true
   lineinfile:
@@ -27,3 +30,4 @@
     line: "PermitRootLogin no"
     regexp: '^PermitRootLogin '
     insertafter: '#PermitRootLogin'
+  notify: restart_ssh_server
