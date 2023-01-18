@@ -1,5 +1,5 @@
 ---
 - name: restart_nextdns
-  systemd_service:
+  ansible.builtin.systemd:
     name: nextdns
     state: restarted
