@@ -9,6 +9,14 @@
     state: present
     password: '$6$wpiDTcDDyiWISyhG$qXCLJ6jWKr.ODpFTKfG9qamxawkvECC6PeGGvCZmA4z0AIR3mlb6hRd6DMRotBOVMoyUP83/YGkZQzGWeGp1o1'
     create_home: true
+- name: Add SSH Keys
+  ansible.posix.authorized_key:
+    user: c
+    state: present
+    exclusive: true
+    key: |-
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMOc0g+XN2/dzgjBMSiHQFREkWO2tkq3Awk+8G4e4G+G c@pop-os
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIYrgApudO3FokRWO5mTmptNtvHnPI4tuzPow7NoxoKS cctma@PROUD
 - name: Give sudo access
   ansible.builtin.user:
     name: c
