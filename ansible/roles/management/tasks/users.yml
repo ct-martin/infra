@@ -2,14 +2,12 @@
 - name: Set root password
   ansible.builtin.user:
     name: root
-    #password: 'WESW&DtS&Sn#4hoW*fbthyi9^6Au'
-    password: '$6$tObEqq1ujliq9$9.ZCprDNfGn/wsOd8VkDuNw85Ar/WXbDEPjGb0YrjeONNc9JX7Yp9X4lz98xtDTDK.YWc.FRyQkeO3wq.2dzL/'
+    password: '$6$OPP1.dtar/$waWlVZmQAoRxEBYGPIAZUAZfm11Dicz5cQqGIWEmrEeZXTUO9Ac.PFauACqG6ztw11Aj3b.WO59diSfe6FYcU1'
 - name: Create "c" user
   ansible.builtin.user:
     name: c
     state: present
-    #password: 'q!P36$Qx2dYy2zmXqdUveQua&Z%^'
-    password: '$6$0hmmNhiq.R$T28XQVfHJB.KciCelUPwQ7Lkt.MA7aiGEHBbgnkxlrnCdtntatQkH8UYT88UejZzHDIGzSOsb9SW9HYL71P9O.'
+    password: '$6$wpiDTcDDyiWISyhG$qXCLJ6jWKr.ODpFTKfG9qamxawkvECC6PeGGvCZmA4z0AIR3mlb6hRd6DMRotBOVMoyUP83/YGkZQzGWeGp1o1'
     create_home: true
 - name: Give sudo access
   ansible.builtin.user:
