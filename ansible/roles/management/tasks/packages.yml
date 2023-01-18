@@ -6,16 +6,6 @@
     autoremove: true
     state: latest
     update_cache: true
-- name: Check if reboot needed
-  ansible.builtin.stat:
-    path: /var/run/reboot-required
-    get_checksum: no
-  register: stat_reboot_required
-- name: Requesting reboot
-  debug:
-    msg: 'Reboot requested (handler notified)'
-  notify: reboot
-  when: stat_reboot_required.stat.exists
 - name: Install common packages
   become: true
   ansible.builtin.apt:
@@ -38,3 +28,12 @@
     state: absent
     name:
     - snapd # don't need on server
+- name: Check if reboot needed
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+    get_checksum: no
+  register: stat_reboot_required
+- name: Reboot
+  when: stat_reboot_required.stat.exists
+  ansible.builtin.reboot:
+    msg: Rebooting to finish system updates
