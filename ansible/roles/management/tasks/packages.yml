@@ -12,6 +12,8 @@
     path: /var/run/reboot-required
     get_checksum: no
 - name: Requesting reboot
+  debug:
+    msg: Reboot required, handler notified
   notify: reboot
   when: stat_reboot_required.stat.exists is true
 - name: Install common packages
