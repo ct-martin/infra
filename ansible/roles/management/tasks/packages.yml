@@ -1,0 +1,26 @@
+---
+- name: Update all packages & autoremove old packages
+  ansible.builtin.apt:
+    name: "*"
+    autoremove: true
+    state: latest
+- name: Install common packages
+  ansible.builtin.apt:
+    state: present # Some of these are "duh" but I've had random packages missing on various distros so...
+    name:
+    - apt-transport-https
+    - bash
+    - ca-certificates
+    - curl
+    - git
+    - less
+    #- mtr-tiny # Don't enable on server, requires SUID binary
+    - nano
+    - sudo
+    #- tmux
+    - wget
+- name: Remove unneeded packages
+  ansible.builtin.apt:
+    state: absent
+    name:
+    - snapd # don't need on server
