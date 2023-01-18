@@ -5,6 +5,7 @@
     name: "*"
     autoremove: true
     state: latest
+    update_cache: true
 - name: Install common packages
   become: true
   ansible.builtin.apt:
