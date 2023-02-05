@@ -20,8 +20,8 @@
   become: true
   lineinfile:
     path: /etc/nextdns.conf
-    line: "config 86b393"
-    regexp: '^config '
+    line: "profile 86b393"
+    regexp: '^profile '
   notify: restart_nextdns
 - name: Configure NextDNS Cache Size
   become: true
