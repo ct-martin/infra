@@ -1,2 +1,29 @@
 ---
-- include_tasks: ssh.yml
+- name: Create login banner
+  become: true
+  ansible.builtin.template:
+    src: banner.j2
+    dest: /etc/issue
+    owner: root
+    group: root
+    mode: 0644
+- name: Create network login banner
+  become: true
+  ansible.builtin.template:
+    src: banner.j2
+    dest: /etc/issue.net
+    owner: root
+    group: root
+    mode: 0644
+- name: Apply SSH Server Configuration
+  become: true
+  ansible.builtin.template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: 0600
+    validate: /usr/sbin/sshd -t -f %s
+    backup: true
+  notify: restart_ssh_server
+- include_tasks: firewall.yml
