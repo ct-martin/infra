@@ -1,5 +1,6 @@
 ---
 - include_tasks: users.yml
+- include_tasks: keys.yml
 - include_tasks: packages.yml
 - include_tasks: tailscale.yml
 - include_tasks: nextdns.yml

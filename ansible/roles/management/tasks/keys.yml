@@ -1,0 +1,14 @@
+---
+- name: Add NextDNS Signing Key
+  become: true
+  ansible.builtin.apt_key:
+    id: AD34842BF3C80F656A833F66467A7CCC8ACFA0B7
+    url: "https://repo.nextdns.io/nextdns.gpg"
+    state: present
+    keyring: /usr/share/keyrings/nextdns.gpg
+- name: Add Tailscale Signing Key
+  become: true
+  ansible.builtin.apt_key:
+    url: "https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }}/{{ ansible_distribution_release }}.noarmor.gpg"
+    state: present
+    keyring: /usr/share/keyrings/tailscale-archive-keyring.gpg
