@@ -1,0 +1,34 @@
+---
+- name: Add Cloudflare Repo
+  become: true
+  ansible.builtin.apt_repository:
+    filename: cloudflared
+    repo: "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared {{ ansible_distribution_release }} main"
+- name: Install cloudflared
+  become: true
+  ansible.builtin.apt:
+    name: cloudflared
+    state: present
+    update_cache: true
+
+# Check if cloudflared is running and if not then configure it
+- name: Get cloudflared service status
+  ansible.builtin.systemd:
+    name: "cloudflared.service"
+  register: cf_service_state
+- name: Run cloudflared
+  become: true
+  when: "cf_service_state.status.ActiveState != 'active'"
+  #ansible.builtin.debug:
+  #  msg: "{{ cf_service_state }}"
+  ansible.builtin.command:
+    cmd: "cloudflared service install {{ cloudflared }}"
+  no_log: true
+
+# Ensure cloudflared is running & enabled
+- name: Ensure cloudflared is enabled & running
+  become: true
+  ansible.builtin.systemd:
+    name: cloudflared
+    state: started
+    enabled: true

@@ -1,6 +1,26 @@
 ---
+# Baseline
+# Note: keys.yml is needed before packages.yml to prevent apt failing
+# when repo keys are rotated (give us a chance to refresh first).
+- include_tasks: users-root.yml
 - include_tasks: users.yml
+  loop: "{{ users|default([]) }}"
+  loop_control:
+    loop_var: user
+    label: "{{ user.username }}"
 - include_tasks: keys.yml
 - include_tasks: packages.yml
+
+# Packages that need
 - include_tasks: tailscale.yml
+  when: "tailscale is defined and tailscale is truthy"
 - include_tasks: nextdns.yml
+  when: "nextdns is defined and nextdns is truthy"
+- include_tasks: cloudflared.yml
+  when: "cloudflared is defined and cloudflared is truthy"
+- include_tasks: docker-ce.yml
+  when: "docker is defined and docker is truthy and docker == 'docker-ce'"
+- include_tasks: nvidia-cuda.yml
+  when: "nvidia is defined and nvidia is truthy"
+- include_tasks: microk8s.yml
+  when: "kubernetes is defined and kubernetes is truthy and kubernetes == 'microk8s'"

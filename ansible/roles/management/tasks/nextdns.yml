@@ -14,7 +14,7 @@
   become: true
   lineinfile:
     path: /etc/nextdns.conf
-    line: "profile 86b393"
+    line: "profile {{ nextdns }}"
     regexp: '^profile '
   notify: restart_nextdns
 - name: Configure NextDNS Cache Size
@@ -53,6 +53,7 @@
     regexp: '^mdns '
   notify: restart_nextdns
 - name: Ensure NextDNS is enabled & running
+  become: true
   ansible.builtin.systemd:
     name: nextdns
     state: started

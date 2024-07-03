@@ -1,30 +1,35 @@
 ---
-- name: Set root password
+- name: Delete removed user {{ user.username }}
   become: true
   ansible.builtin.user:
-    name: root
-    password: '$6$OPP1.dtar/$waWlVZmQAoRxEBYGPIAZUAZfm11Dicz5cQqGIWEmrEeZXTUO9Ac.PFauACqG6ztw11Aj3b.WO59diSfe6FYcU1'
-- name: Create "c" user
+    name: "{{user.username}}"
+    remove: true
+    state: absent
+  when: "user.should_exist|default(True) is falsy"
+- name: Create user {{ user.username }}
   become: true
   ansible.builtin.user:
-    name: c
+    name: "{{user.username}}"
     state: present
     shell: /usr/bin/bash
-    password: '$6$wpiDTcDDyiWISyhG$qXCLJ6jWKr.ODpFTKfG9qamxawkvECC6PeGGvCZmA4z0AIR3mlb6hRd6DMRotBOVMoyUP83/YGkZQzGWeGp1o1'
+    password: '{{user.password_hash|default("!")}}'
     create_home: true
-- name: "Add c's SSH Keys"
+    groups: "{{user.groups}}"
+    update_password: "{{ (user.password_overwrite|default(False) is truthy) | ternary('always','on_create') }}"
+  when: "user.should_exist|default(True) is truthy"
+- name: "Add SSH Keys {{user.username}}"
   become: true
   ansible.posix.authorized_key:
-    user: c
+    user: "{{ user.username }}"
     state: present
     exclusive: true
-    key: |-
-      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMOc0g+XN2/dzgjBMSiHQFREkWO2tkq3Awk+8G4e4G+G c@pop-os
-      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIYrgApudO3FokRWO5mTmptNtvHnPI4tuzPow7NoxoKS cctma@PROUD
-      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKU24OJb3SjQgC6uB3aH0baQ0VDf5Qqf8jpqBlIJ27Jj ctmartin@wsl
-- name: Give sudo access
+    key: "{{ user.ssh_keys }}"
+  when: "user.should_exist|default(True) is truthy and user.ssh_keys|default([])|length > 0"
+- name: "Remove SSH Keys {{user.username}} (none specified)"
   become: true
-  ansible.builtin.user:
-    name: c
-    groups: sudo
-    append: yes
+  ansible.posix.authorized_key:
+    user: "{{ user.username }}"
+    state: present
+    key: ""
+    exclusive: true
+  when: "user.should_exist|default(True) is truthy and user.ssh_keys|default([])|length == 0"

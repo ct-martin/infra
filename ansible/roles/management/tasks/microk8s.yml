@@ -1,0 +1,41 @@
+# Pre-req - install snapd
+# Modified from: https://github.com/geerlingguy/ansible-role-certbot/blob/master/tasks/install-with-snap.yml
+- name: Install snapd
+  become: true
+  ansible.builtin.apt:
+    name: snapd
+    state: present
+  register: snapd_install
+- name: Enable snapd
+  become: true
+  ansible.builtin.systemd:
+    name: snapd.socket
+    enabled: true
+    state: started
+- name: Check if snap classic mode is enabled
+  ansible.builtin.stat:
+    path: /snap
+  register: snapd_classic_enabled
+- name: Enable classic snap support
+  become: true
+  ansible.builtin.file:
+    src: /var/lib/snapd/snap
+    dest: /snap
+    state: link
+  when: not snapd_classic_enabled.stat.exists
+- name: Update snap after install
+  become: true
+  ansible.builtin.shell: snap install core; snap refresh core
+  changed_when: true
+  failed_when: false
+  when: snapd_install is changed
+
+# MicroK8s
+- name: Install MicroK8s
+  become: true
+  community.general.snap:
+    name:
+    - microk8s
+    state: present
+    classic: true
+# TODO start/enable in systemd

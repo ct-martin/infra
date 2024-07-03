@@ -21,20 +21,25 @@
     - nano
     - sudo
     - tmux
+    - unzip
     - wget
+    # For WSLg (WSL with GUI support):
+    #- libxrender1
+    #- libxtst6
+    #- libxi6
 - name: Remove unneeded packages
   become: true
   ansible.builtin.apt:
     state: absent
     name:
     - pastebinit
-- name: Check if reboot needed
-  ansible.builtin.stat:
-    path: /var/run/reboot-required
-    get_checksum: no
-  register: stat_reboot_required
-- name: Reboot
-  become: true
-  when: stat_reboot_required.stat.exists
-  ansible.builtin.reboot:
-    msg: Rebooting to finish system updates
+#- name: Check if reboot needed
+#  ansible.builtin.stat:
+#    path: /var/run/reboot-required
+#    get_checksum: no
+#  register: stat_reboot_required
+#- name: Reboot
+#  become: true
+#  when: stat_reboot_required.stat.exists
+#  ansible.builtin.reboot:
+#    msg: Rebooting to finish system updates

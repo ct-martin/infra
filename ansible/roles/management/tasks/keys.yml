@@ -6,9 +6,45 @@
     url: "https://repo.nextdns.io/nextdns.gpg"
     state: present
     keyring: /usr/share/keyrings/nextdns.gpg
+  when: "nextdns is defined and nextdns is truthy"
 - name: Add Tailscale Signing Key
   become: true
   ansible.builtin.apt_key:
     url: "https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }}/{{ ansible_distribution_release }}.noarmor.gpg"
     state: present
     keyring: /usr/share/keyrings/tailscale-archive-keyring.gpg
+#- name: Add Docker CE Signing Key
+#  become: true
+#  ansible.builtin.apt_key:
+#    url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+#    state: present
+#    keyring: /usr/share/keyrings/docker.gpg
+#  when: "docker is truthy"
+- name: Add Cloudflare Signing Key
+  become: true
+  ansible.builtin.apt_key:
+    url: "https://pkg.cloudflare.com/cloudflare-main.gpg"
+    state: present
+    keyring: /usr/share/keyrings/cloudflare-main.gpg
+  when: "cloudflared is defined and cloudflared is truthy"
+#- name: Add Google Signing Key
+#  become: true
+#  ansible.builtin.apt_key:
+#    url: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+#    state: present
+#    keyring: /usr/share/keyrings/google.gpg
+#  when: "google-coral is truthy"
+#- name: Ensure nvidia-container-toolkit-keyring is installed (manages repo)
+#  become: true
+#  ansible.builtin.apt_key:
+#    url: "https://nvidia.github.io/libnvidia-container/gpgkey"
+#    state: present
+#    keyring: /use/share/keyrings/nvidia-container-toolkit.gpg
+#  when: "nvidia is truthy and (docker is truthy or kubernetes is truthy)"
+#- name: Add GitHub CLI Signing Key
+#  become: true
+#  ansible.builtin.apt_key:
+#    url: "https://cli.github.com/packages/githubcli-archive-keyring.gpg"
+#    state: present
+#    keyring: /usr/share/keyrings/githubcli-archive-keyring.gpg
+#  #when: "cloudflared is defined and cloudflared is truthy"

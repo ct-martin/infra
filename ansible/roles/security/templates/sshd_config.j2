@@ -118,3 +118,19 @@ Subsystem	sftp	/usr/lib/openssh/sftp-server
 #	AllowTcpForwarding no
 #	PermitTTY no
 #	ForceCommand cvs server
+
+{# Commented out; I'm not using right now
+
+{% for user in users %}
+{% if (user.allow_no_pubkey_ssh|default(False) is truthy) %}
+# This user has an exception specified to allow non-pubkey SSH
+Match User {{user.username}}
+  PasswordAuthentication yes
+{% endif %}
+{% endfor %}
+
+#}
+
+# Allow localhost to use password auth (e.g. for Cloudflare)
+Match Host 127.0.0.1,::1
+  PasswordAuthentication yes
