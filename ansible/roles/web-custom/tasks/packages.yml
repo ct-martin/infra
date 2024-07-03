@@ -1,0 +1,132 @@
+---
+# Pre-req - install snapd
+# Modified from: https://github.com/geerlingguy/ansible-role-certbot/blob/master/tasks/install-with-snap.yml
+- name: Install snapd
+  become: true
+  ansible.builtin.apt:
+    name: snapd
+    state: present
+  register: snapd_install
+- name: Enable snapd
+  become: true
+  ansible.builtin.systemd:
+    name: snapd.socket
+    enabled: true
+    state: started
+- name: Check if snap classic mode is enabled
+  ansible.builtin.stat:
+    path: /snap
+  register: snapd_classic_enabled
+- name: Enable classic snap support
+  become: true
+  ansible.builtin.file:
+    src: /var/lib/snapd/snap
+    dest: /snap
+    state: link
+  when: not snapd_classic_enabled.stat.exists
+- name: Update snap after install
+  become: true
+  ansible.builtin.shell: snap install core; snap refresh core
+  changed_when: true
+  failed_when: false
+  when: snapd_install is changed
+
+# Web server/proxy
+- name: Install Nginx
+  become: true
+  ansible.builtin.apt:
+    state: present
+    name:
+    - nginx
+- name: Enable Nginx
+  become: true
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: true
+    state: started
+
+# Certbot/Let's Encrypt
+- name: Install Certbot
+  become: true
+  community.general.snap:
+    name:
+    - certbot
+    state: present
+    classic: true
+    options:
+    - trust-plugin-with-root=ok
+- name: Install Certbot DNS plugin
+  become: true
+  community.general.snap:
+    name:
+    - certbot-dns-cloudflare
+    state: present
+- name: Create symlink for certbot command
+  become: true
+  ansible.builtin.file:
+    src: /snap/bin/certbot
+    dest: /usr/bin/certbot
+    state: link
+- name: Enable Certbot renewal timer
+  become: true
+  ansible.builtin.systemd:
+    name: snap.certbot.renew.timer
+    enabled: true
+    state: started
+
+# PHP
+- name: Install PHP & common extensions
+  become: true
+  ansible.builtin.apt:
+    state: present
+    name: # PHP and a bunch of common extensions
+    - "php{{ item }}-fpm" # Note: use phpX.Y-fpm, NOT phpX.Y; apt will also install Apache if you don't
+    - "php{{ item }}-apcu"
+    - "php{{ item }}-curl"
+    - "php{{ item }}-gd"
+    - "php{{ item }}-imagick"
+    - "php{{ item }}-intl"
+    - "php{{ item }}-mbstring"
+    - "php{{ item }}-mysql"
+    - "php{{ item }}-xml"
+    - "php{{ item }}-zip"
+  loop: "{{ php_versions|default([]) }}"
+  when: "php_versions is defined or 'php' in web_stacks|default([]) or 'wordpress' in web_stacks|default([])"
+- name: Enable PHP-FPM service
+  become: true
+  ansible.builtin.systemd:
+    name: "php{{ item }}-fpm"
+    enabled: true
+    state: started
+  loop: "{{ php_versions|default([]) }}"
+  when: "php_versions is defined or 'php' in web_stacks|default([]) or 'wordpress' in web_stacks|default([])"
+
+# WordPress CLI
+#- name: Install WordPress tools
+#  when: "'wordpress' in web_stacks|default([])"
+#  block:
+#  - name: Install Composer
+#    become: true
+#    ansible.builtin.apt:
+#      state: present
+#      name:
+#      - composer
+#  - name: Install WP-CLI
+#    become: true
+#    community.general.composer:
+#      command: require
+#      global_command: true
+#      arguments: wp-cli/wp-cli-bundle
+
+
+# MySQL
+- name: Set up MySQL (MariaDB)
+  when: "'mysql' in web_stacks|default([]) or 'mariadb' in web_stacks|default([]) or 'wordpress' in web_stacks|default([])"
+  block:
+  - name: Install MySQL (MariaDB)
+    become: true
+    ansible.builtin.apt:
+      state: present
+      name:
+      - mariadb-server
+      - python3-pymysql

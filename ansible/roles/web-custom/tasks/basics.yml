@@ -1,0 +1,95 @@
+---
+# Certbot
+- name: Check Certbot credential is set
+  ansible.builtin.fail:
+    msg: "Missing API Token for Certbot to use Cloudflare for DNS Challenges"
+  when: "certbot_cloudflare_api_token is not defined"
+- name: Create Certbot secrets directory
+  become: true
+  ansible.builtin.file:
+    path: /root/.secrets
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+- name: Configure Certbot's Cloudflare credentials
+  become: true
+  ansible.builtin.template:
+    src: cloudflare.ini.j2
+    dest: /root/.secrets/certbot-cloudflare.ini
+    owner: root
+    group: root
+    mode: '0600'
+- name: Check if a certbot account is registered
+  become: true
+  ansible.builtin.stat:
+    path: /etc/letsencrypt/accounts/acme-v02.api.letsencrypt.org/directory/
+  register: certbot_has_account
+- name: Register with Certbot if no account
+  become: true
+  ansible.builtin.shell: certbot register --email admin@ctmartin.dev,admin@ctmartin.me --no-eff-email --agree-tos
+  when: "not certbot_has_account.stat.exists"
+- name: Create Certbot certificate directories
+  become: true
+  ansible.builtin.file:
+    path: "/etc/letsencrypt/{{ item }}/"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755' # See https://eff-certbot.readthedocs.io/en/stable/using.html#where-are-my-certificates
+  loop:
+  - live
+  - archive
+
+# Patch Nginx MIME Types for RFC 9239
+# (Changes MIME type from application/javascript to text/javascript and adds .mjs extension)
+- name: Patch Nginx MIME types for RFC 9239
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/nginx/mime.types
+    regexp: '(application|text)/javascript'
+    line: '    text/javascript                       js mjs;'
+    insertafter: 'image/jpeg'
+    state: present
+  notify: reload_nginx
+
+# Nginx Cleanup
+- name: Disable default Nginx config
+  become: true
+  ansible.builtin.file:
+    path: "/etc/nginx/sites-enabled/default"
+    state: absent
+- name: Ensure Nginx is running
+  become: true
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: true
+    state: restarted
+
+# PHP Cleanup
+- name: Remove default PHP pool
+  become: true
+  ansible.builtin.file:
+    path: "/etc/php/{{ item }}/fpm/pool.d/www.conf"
+    state: absent
+  loop: "{{ php_versions|default([]) }}"
+
+# MySQL Cleanup
+- name: Cleanup default install of MySQL (MariaDB)
+  when: "'lemp' in web_stacks|default([]) or 'wordpress' in web_stacks|default([])"
+  block:
+  - name: Remove anonymous user
+    become: true
+    community.mysql.mysql_user:
+      name: ''
+      host_all: true
+      state: absent
+      check_implicit_admin: true
+      login_unix_socket: /run/mysqld/mysqld.sock
+  - name: Remove test database
+    become: true
+    community.mysql.mysql_db:
+      name: test
+      state: absent
+      check_implicit_admin: true
+      login_unix_socket: /run/mysqld/mysqld.sock

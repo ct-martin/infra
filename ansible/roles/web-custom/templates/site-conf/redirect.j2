@@ -1,0 +1,84 @@
+# This file is managed by Ansible
+# Changes will be overwritten
+# Site: {{ site.id }} ({{ site.name }})
+
+server {
+        listen *:443 ssl http2;
+        listen [::]:443 ssl http2;
+
+        server_name {{ site.domain }}{% if site.additional_domains is defined %} {{ site.additional_domains|join(' ') }}{% endif %};
+
+{% if cloudflared is defined and cloudflared is truthy %}
+        # Trust cloudflared for client IPs
+        set_real_ip_from 127.0.0.1;
+        set_real_ip_from ::1;
+        real_ip_header CF-Connecting-IP;
+        #real_ip_header X_Forwarded-For;
+{% endif %}
+
+        access_log /var/log/nginx/{{ site.logfileid|default(site.id) }}-access.log;
+        error_log /var/log/nginx/{{ site.logfileid|default(site.id) }}-error.log;
+
+        # SSL/TLS Options
+        ssl_certificate /etc/letsencrypt/live/{{ site.certid|default(site.id) }}/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/{{ site.certid|default(site.id) }}/privkey.pem;
+        include /etc/letsencrypt/options-ssl-nginx.conf;
+
+        # Security Headers
+        server_tokens off;
+        add_header Content-Security-Policy-Report-Only   "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https: data:; media-src 'self' https:; object-src 'none'; frame-ancestors 'self';" always;
+        add_header Permissions-Policy        "browsing-topics=() interest-cohort=()" always;
+        #add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+        #add_header Referrer-Policy           "same-origin" always;
+        add_header Referrer-Policy           "{{ site.referrer_policy|default("strict-origin-when-cross-origin") }}" always;
+        #add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header X-Frame-Options           "SAMEORIGIN" always;
+        add_header X-XSS-Protection          "1; mode=block" always;
+
+{% if site.cors is defined %}
+        # CORS
+        add_header Access-Control-Allow-Origin "{{ site.cors }}";
+{% endif %}
+
+        # High-traffic files
+
+        # Ignore logs for favicon and robots.txt (reduce noise)
+        location = /favicon.ico {
+                log_not_found off;
+        }
+        location = /robots.txt {
+                log_not_found off;
+        }
+{% if security_txt is defined %}
+        location = /.well-known/security.txt {
+                try_files /security.txt =404;
+        }
+{% endif %}
+
+        # REWRITES
+        # Rewrites are grouped by location_block in the order that the location_block(s) appear,
+        # except for the "/" location_block, which will always be last.
+        # Default location block if not specified is "/"
+
+{% for loc_block in site.rewrites|default([])|map(attribute="location_block", default="/")|unique|difference(["/"])|union(["/"]) %}
+        location {{ loc_block }} {
+{% for rewrite in site.rewrites %}
+{% if rewrite.location_block|default("/") == loc_block %}
+{% if rewrite.enabled|default(True) is truthy %}
+{% if rewrite.comment is defined %}
+                # {{ rewrite.comment }}
+{% endif %}
+                rewrite {{ rewrite.pattern }} {{ rewrite.location }} {% if rewrite.permanent|default(False) is truthy%}permanent{% else %}redirect{% endif %};
+{% endif %}
+
+{% endif %}
+{% endfor %}
+{% if loc_block == "/" %}
+                # If nothing was matched above, we have an oops
+                return 404;
+{% endif %}
+        }
+
+{% endfor %}
+}
