@@ -1,0 +1,17 @@
+users:
+  - username: christian
+    should_exist: true
+    password_hash: "$6$wpiDTcDDyiWISyhG$qXCLJ6jWKr.ODpFTKfG9qamxawkvECC6PeGGvCZmA4z0AIR3mlb6hRd6DMRotBOVMoyUP83/YGkZQzGWeGp1o1"
+    password_overwrite: false
+    groups:
+    - sudo
+    - www-data
+    - www-portfolio
+    ssh_keys: |-
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMOc0g+XN2/dzgjBMSiHQFREkWO2tkq3Awk+8G4e4G+G c@pop-os
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIYrgApudO3FokRWO5mTmptNtvHnPI4tuzPow7NoxoKS cctma@PROUD
+      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKU24OJb3SjQgC6uB3aH0baQ0VDf5Qqf8jpqBlIJ27Jj ctmartin@wsl
+  #- username: c
+  #  should_exist: false
+  #- username: ct
+  #  should_exist: false

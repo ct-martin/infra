@@ -4,8 +4,7 @@
   roles:
   - management
   - security
-#- hosts:
-#  - web.ctmartin.me
-#  name: "Set up web environment"
-#  roles:
-#  - web-custom
+- hosts: web
+  name: "Set up web environment"
+  roles:
+  - web-custom
