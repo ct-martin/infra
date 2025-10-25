@@ -1,0 +1,43 @@
+{% include "blocks/header-comment.j2" %}
+
+{# % include "blocks/additional_domains.j2" % #}
+
+server {
+{% include "blocks/listen.j2" %}
+
+        server_name {{ site.domain }}{% if site.additional_domains is defined %} {{ site.additional_domains|join(' ') }}{% endif %};
+
+{% include "blocks/ssl.j2" %}
+
+{% include "blocks/real-ip.j2" %}
+
+{% include "blocks/logs.j2" %}
+
+{% include "blocks/security-headers.j2" %}
+
+        # REWRITES
+        # Rewrites are grouped by location_block in the order that the location_block(s) appear,
+        # except for the "/" location_block, which will always be last.
+        # Default location block if not specified is "/"
+
+{% for loc_block in site.rewrites|default([])|map(attribute="location_block", default="/")|unique|difference(["/"])|union(["/"]) %}
+        location {{ loc_block }} {
+{% for rewrite in site.rewrites %}
+{% if rewrite.location_block|default("/") == loc_block %}
+{% if rewrite.enabled|default(True) is truthy %}
+{% if rewrite.comment is defined %}
+                # {{ rewrite.comment }}
+{% endif %}
+                rewrite {{ rewrite.pattern }} {{ rewrite.location }}{% if rewrite.flag is defined %} {{ rewrite.flag }}{% endif %};
+{% endif %}
+
+{% endif %}
+{% endfor %}
+{% if loc_block == "/" %}
+                # If nothing was matched above, we have an oops
+                return 404;
+{% endif %}
+        }
+
+{% endfor %}
+}

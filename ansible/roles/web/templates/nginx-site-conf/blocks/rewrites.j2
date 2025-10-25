@@ -1,0 +1,13 @@
+{% if site.rewrites is defined %}
+        # Rewrites
+
+{% for rewrite in site.rewrites %}
+{% if rewrite.enabled|default(True) is truthy %}
+{% if rewrite.comment is defined %}
+        # {{ rewrite.comment }}
+{% endif %}
+        rewrite {{ rewrite.pattern }} {{ rewrite.location }}{% if rewrite.flag is defined %} {{ rewrite.flag }}{% endif %};
+{% endif %}
+
+{% endfor %}
+{% endif %}

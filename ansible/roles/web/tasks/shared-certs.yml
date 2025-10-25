@@ -1,0 +1,19 @@
+---
+# Mirrors Certbot section of sites.yml
+- name: "Check if certs exists ({{ site.certid|default(site.id) }})"
+  become: true
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/live/{{ site.certid|default(site.id) }}/"
+  register: certbot_cert
+- name: "Create certs ({{ site.certid|default(site.id) }}) (Note: WILL NOT update list of domains (yet))"
+  become: true
+  ansible.builtin.shell: "certbot certonly --dns-cloudflare --dns-cloudflare-propagation-seconds 30 --dns-cloudflare-credentials /root/.secrets/certbot-cloudflare.ini -i nginx --cert-name {{ site.certid|default(site.id) }} -d {{ [site.domain]|union(site.additional_domains|default([])) | join(' -d ') }}"
+  notify: reload_nginx
+  when: "not certbot_cert.stat.exists"
+- name: "Set permissions on certificate so web server can read ({{ site.certid|default(site.id) }})"
+  become: true
+  ansible.builtin.file:
+    path: "/etc/letsencrypt/live/{{ site.certid|default(site.id) }}/privkey.pem"
+    owner: root
+    group: www-data
+    mode: '0640'

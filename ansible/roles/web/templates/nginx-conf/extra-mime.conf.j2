@@ -1,0 +1,19 @@
+{#
+#- name: "Add Nginx MIME type for: {{ item.name|default(item.mime_type) }}"
+#  become: true
+#  ansible.builtin.lineinfile:
+#    path: /etc/nginx/mime.types
+#    regexp: '{{ item.mime_type }}'
+#    line: '    {{ item.mime_type }} {{ item.extensions|join(" ")|replace(".","") }};'
+#    insertbefore: "}"
+#    state: present
+#  loop: "{{ additional_mime_types|default([]) }}"
+#  notify: reload_nginx
+#}
+types {
+{% for mime in additional_mime_types %}
+{% if mime.extensions|default([])|length > 0 %}
+  {{ mime.mime_type }} {{ mime.extensions|join(" ")|replace(".","") }};
+{% endif %}
+{% endfor %}
+}

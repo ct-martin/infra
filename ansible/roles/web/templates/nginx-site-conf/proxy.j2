@@ -1,0 +1,96 @@
+{% include "blocks/header-comment.j2" %}
+# See also:
+# * Useful reference: <>
+#
+# TODO:
+# * Should all additional domains be proxied instead of redirecting? This could be useful/used by some applications
+
+{% include "blocks/additional-domains.j2" %}
+
+server {
+{% include "blocks/detailedlog.j2" %}
+
+        server_name {{ site.domain }};
+        #root {{ site.directory if site.directory is defined and site.directory.startswith('/home') else ['/var/www/', site.directory|default(site.id)] | path_join }}/;
+        #index index.html;
+        #error_page 404 /404.html;
+
+{% include "blocks/ssl.j2" %}
+
+{% include "blocks/real-ip.j2" %}
+
+{% include "blocks/logs.j2" %}
+
+{% include "blocks/security-headers.j2" %}
+
+{% if site.rewrites is defined %}
+        # Rewrites
+
+{% for rewrite in site.rewrites %}
+{% if rewrite.enabled|default(True) is truthy %}
+{% if rewrite.comment is defined %}
+        # {{ rewrite.comment }}
+{% endif %}
+        rewrite {{ rewrite.pattern }} {{ rewrite.location }}{% if rewrite.flag is defined %} {{ rewrite.flag }}{% endif %};
+
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% include "blocks/common-files.j2" %}
+
+{% include "blocks/block-dumb-attacks.j2" %}
+
+        # Proxy to remote server
+        location / {
+                # Proxy destination
+                proxy_pass {{ site.proxy_pass }};
+                proxy_set_header Host $host;
+
+                # Forward connection info
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_set_header X-Forwarded-Host $host;
+                proxy_set_header X-Forwarded-Scheme $scheme;
+{% if site.proxy_ssl_verify|default(false) %}
+
+                # Require proxied server's SSL/TLS certificate to be valid & signed by a public CA
+                # (Do not use for self-signed certs)
+                proxy_ssl_verify on;
+                proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+{% else %}
+
+                # Don't verify SSL certificate (default behavior in Nginx)
+                proxy_ssl_verify off;
+{% endif %}
+{% if site.proxy_compression|default(false) %}
+
+                # Disable compression (e.g. gzip)
+                proxy_set_header Accept-Encoding "";
+{% endif %}
+{% if site.websockets|default(false) %}
+
+                # Websockets
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection $http_connection;
+                proxy_http_version 1.1;
+                #proxy_cache_bypass $http_upgrade;
+{% endif %}
+{% if site.proxy_no_buffer|default(false) %}
+                # Disable buffering to a temporary file
+                proxy_max_temp_file_size 0;
+{% endif %}
+{% if false %}
+
+                # Proxy timeouts
+                proxy_connect_timeout 60s;
+                proxy_send_timeout 60s;
+                proxy_read_timeout 60s;
+{% endif %}
+{% if false %}
+
+                # TODO: caching
+{% endif %}
+        }
+}

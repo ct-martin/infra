@@ -1,0 +1,55 @@
+        # Security Headers
+        server_tokens off;
+        add_header Permissions-Policy        "browsing-topics=(), interest-cohort=()" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header X-Frame-Options           "SAMEORIGIN" always;
+        add_header X-XSS-Protection          "1; mode=block" always;
+{#
+        #add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+        #add_header Referrer-Policy           "same-origin" always;
+#}
+        add_header Referrer-Policy           "{{ site.referrer_policy|default("strict-origin-when-cross-origin") }}" always;
+{#
+        # HSTS; currently disabled since either my TLD has HSTS at that level or I don't want it for all subdomains
+        #add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+#}
+
+        # CORS, CORP, COEP, COOP
+        #
+        # This section declares rules related to cross-origin requests
+        # and whether the browser should/shouldn't allow access
+        #
+        # See also: https://resourcepolicy.fyi/
+        # See also: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS
+        # Note: ACAO is only allowed to send either a wildcard (`*`) or a single origin (`https://example.com`)
+        #       If need to send multiple origins, the response needs to use $http_origin or similar for those origins
+        # TODO: https://enable-cors.org/server_nginx.html
+{% if site.reporting_endpoint is defined %}
+        add_header Reporting-Endpoints 'csp-endpoint="{{ site.reporting_endpoint }}"' always;
+{% endif %}
+{% if site.cors is defined %}
+        add_header Access-Control-Allow-Origin "{{ site.cors }}" always;
+{% endif %}
+{% if site.corp is defined %}
+        add_header Cross-Origin-Resource-Policy "{{ site.corp }}" always;
+{% endif %}
+{% if site.coep is defined %}
+        add_header Cross-Origin-Embedder-Policy "{{ site.coep }}" always;
+{% endif %}
+{% if site.coop is defined %}
+        add_header Cross-Origin-Opener-Policy "{{ site.coop }}" always;
+{% endif %}
+
+
+{% if site.csp is defined or site.csp_report_only is defined %}
+        # CSP
+{#
+        add_header Content-Security-Policy-Report-Only   "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https: data:; media-src 'self' https:; object-src 'none'; frame-ancestors 'self';{% if site.csp_endpoint is defined %} report-to csp-endpoint;{% endif %}" always;
+#}
+{% if site.csp is defined and site.csp is truthy %}
+        add_header Content-Security-Policy   "{% for directive, policy in site.csp.items() %}{{ directive }}{{ policy|join(' ') }}; {% endfor %}{% if site.csp_endpoint is defined %} report-to csp-endpoint;{% endif %}" always;
+{% endif %}
+{% if site.csp_report_only is defined and site.csp_report_only is truthy %}
+        add_header Content-Security-Policy-Report-Only   "{% for directive, policy in site.csp_report_only.items() %}{{ directive }} {{ policy|join(' ') }}; {% endfor %}{% if site.csp_endpoint is defined %} report-to csp-endpoint;{% endif %}" always;
+{% endif %}
+{% endif %}

@@ -1,0 +1,32 @@
+{% include "blocks/header-comment.j2" %}
+# See also:
+# * Useful reference: <>
+
+{% include "blocks/additional-domains.j2" %}
+
+server {
+{% include "blocks/listen.j2" %}
+
+        server_name {{ site.domain }};
+
+        # Serve static files
+{% include "blocks/root.j2" %}
+        index index.html;
+        error_page 404 /404.html;
+
+{% include "blocks/ssl.j2" %}
+
+{% include "blocks/real-ip.j2" %}
+
+{% include "blocks/logs.j2" %}
+
+{% include "blocks/security-headers.j2" %}
+
+{% include "blocks/common-files.j2" %}
+
+{% include "blocks/block-dumb-attacks.j2" %}
+
+        location / {
+                try_files $uri $uri/ $uri.html =404;
+        }
+}

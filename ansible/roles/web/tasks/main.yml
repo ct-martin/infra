@@ -1,0 +1,63 @@
+---
+- name: Gather package facts (for version info)
+  tags: ['web','web--sites']
+  ansible.builtin.package_facts:
+    manager: auto
+# Common things
+- name: Add additional MIME types
+  become: true
+  ansible.builtin.template:
+    src: "nginx-conf/extra-mime.conf.j2"
+    dest: "/etc/nginx/conf.d/extra-mime.conf"
+    owner: root
+    group: www-data
+    mode: '0644'
+    validate: bash -c 'echo "include /etc/nginx/modules-enabled/*.conf; events { worker_connections 64; } http { include %s; }" > /tmp/nginx.conf; sudo nginx -T -c /tmp/nginx.conf && rm -f /tmp/nginx.conf'
+  notify: reload_nginx
+- name: Update UTF8 types
+  become: true
+  ansible.builtin.template:
+    src: "nginx-conf/utf8.conf.j2"
+    dest: "/etc/nginx/conf.d/utf8.conf"
+    owner: root
+    group: www-data
+    mode: '0644'
+    validate: bash -c 'echo "include /etc/nginx/modules-enabled/*.conf; events { worker_connections 64; } http { include %s; }" > /tmp/nginx.conf; sudo nginx -T -c /tmp/nginx.conf && rm -f /tmp/nginx.conf'
+  notify: reload_nginx
+#- name: "Add Nginx MIME type for: {{ item.name|default(item.mime_type) }}"
+#  become: true
+#  ansible.builtin.lineinfile:
+#    path: /etc/nginx/mime.types
+#    regexp: '{{ item.mime_type }}'
+#    line: '    {{ item.mime_type }} {{ item.extensions|join(" ")|replace(".","") }};'
+#    insertbefore: "}"
+#    state: present
+#  loop: "{{ additional_mime_types|default([]) }}"
+#  notify: reload_nginx
+# Create shared certs
+- include_tasks: shared-certs.yml
+  loop: "{{ certs|default([]) }}"
+  loop_control:
+    loop_var: site
+    label: "{{ site.name|default(site.certid)|default(site.id) }}"
+# Main loop for per-site tasks
+- include_tasks:
+    file: sites.yml
+    apply:
+      tags: ['web','web--sites']
+  tags: ['web','web--sites']
+  loop: "{{ sites|default([]) }}"
+  loop_control:
+    loop_var: site
+    label: "{{ site.name }}"
+# Post-site-creation tasks
+- name: "Ensure admins are members of www-data group"
+  become: true
+  tags: ['web','web--sites']
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: "www-data"
+    append: true
+  loop: "{{ admin_accounts }}"
+  when: "site.group is defined and admin_accounts is defined"
+# TODO remove users 

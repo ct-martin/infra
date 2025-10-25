@@ -1,0 +1,21 @@
+{% include "blocks/header-comment.j2" %}
+# This config provides a simple healthcheck
+server {
+        #listen 127.0.0.1:80;
+        listen *:80;
+        listen [::]:80;
+{% include "blocks/listen.j2" %}
+
+        #server_name {{ ansible_host }};
+        server_name {{ site.domain }}{% if site.additional_domains is defined %} {{ site.additional_domains|join(' ') }}{% endif %};
+
+{% include "blocks/ssl.j2" %}
+
+        access_log off;
+        error_log /dev/null emerg; # (`error_log` doesn't have an `off` option like `access_log` does)
+
+        location / {
+          add_header Content-Type text/plain;
+          return 200 'healthy';
+        }
+}

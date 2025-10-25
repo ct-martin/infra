@@ -1,0 +1,16 @@
+        # High-traffic files
+
+        # Ignore logs for favicon and robots.txt (reduce noise)
+        location = /favicon.ico {
+                log_not_found off;
+                access_log off;
+        }
+        location = /robots.txt {
+                log_not_found off;
+                access_log off;
+        }
+{% if security_txt is defined %}
+        location = /.well-known/security.txt {
+                try_files /security.txt =404;
+        }
+{% endif %}

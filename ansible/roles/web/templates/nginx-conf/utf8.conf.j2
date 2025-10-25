@@ -1,0 +1,6 @@
+charset UTF-8;
+
+{% set utf8types = additional_mime_types|selectattr("utf8","defined")|selectattr("utf8")|map(attribute="mime_type")|join(" ") %}
+{% set utf8default = "text/xml text/plain text/vnd.wap.wml text/javascript application/rss+xml" %}
+{# Note: `text/html` is always included #}
+charset_types {{ utf8default }}{% if utf8types|length > 0 %} {{ utf8types }}{% endif %};

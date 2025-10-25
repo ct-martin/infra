@@ -1,0 +1,27 @@
+        # Restrictions/Security
+        # Don't count on these to stop all attacks; they mostly just stop dumb scripts
+
+        # Block hidden files
+        # Note: `.well-known/` directories are intended to be public
+        location ~ /\.(?!well-known) {
+                access_log off;
+                log_not_found off;
+                deny all;
+        }
+
+        # Block nginx.conf (site-specific Nginx configutation; we don't use this and we're ignoring)
+        location = /nginx.conf {
+                deny all;
+        }
+        
+        # Return 403 forbidden for readme.(txt|html) or license.(txt|html) or example.(txt|html)
+        #if ($uri ~* "^.+(readme|license|example)\.(txt|html)$") {
+        #        return 403;
+        #}
+        
+        # Deny backup extensions & log files
+        #location ~* ^.+\.(bak|log|old|orig|original|php#|php~|php_bak|save|swo|swp|sql)$ {
+        #        deny all;
+        #        access_log off;
+        #        log_not_found off;
+        #}

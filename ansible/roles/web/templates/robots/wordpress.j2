@@ -1,0 +1,22 @@
+# Apply to all crawlers
+User-Agent: *
+
+# WordPress Admin Disallows
+Disallow: /wp-admin/
+#Allow: /wp-admin/admin-ajax.php
+Disallow: /wp-login.php
+
+# WordPress Search Abuse Disallows
+Disallow: /?s=
+Disallow: /search/
+Disallow: /page/*/?s=
+
+# WordPress API Disallows
+Disallow: /wp-json/
+Disallow: /?rest_route=/
+Disallow: /xmlrpc.php
+
+# Cloudflare Disallows
+Disallow: /cdn-cgi/
+
+Sitemap: https://{{site.domain}}/sitemap_index.xml

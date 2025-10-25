@@ -1,0 +1,18 @@
+{% if site.additional_domains is defined %}
+# Redirect additional domains to the primary domain
+server {
+{% include "blocks/listen.j2" %}
+
+        server_name {{ site.additional_domains|join(' ') }};
+
+{% include "blocks/ssl.j2" %}
+
+{% include "blocks/real-ip.j2" %}
+
+{% include "blocks/logs.j2" %}
+
+{% include "blocks/security-headers.j2" %}
+
+        return 301 https://{{ site.domain }}$request_uri;
+}
+{% endif %}

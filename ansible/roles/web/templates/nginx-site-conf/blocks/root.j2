@@ -1,0 +1,1 @@
+        root {{ site.directory if site.directory is defined and site.directory.startswith('/home') else ['/var/www/', site.directory|default(site.id)] | path_join }}/;

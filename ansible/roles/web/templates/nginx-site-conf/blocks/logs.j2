@@ -1,0 +1,5 @@
+{% if (site.log|default("basic")) == "off" or (site.log|default("basic")) is falsy %}
+{% include "blocks/log-off.j2" %}
+{% else %}
+{% include "blocks/log-basic.j2" %}
+{% endif %}

@@ -10,7 +10,6 @@
 
 # MySQL Cleanup
 - name: Cleanup default install of MySQL (MariaDB)
-  when: "'lemp' in web_stacks|default([]) or 'wordpress' in web_stacks|default([])"
   block:
   - name: Remove anonymous user
     become: true

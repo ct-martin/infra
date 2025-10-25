@@ -1,0 +1,5 @@
+---
+dependencies:
+- role: stacks/nginx
+#- role: stacks/lamp # TODO change to soft/peer dep
+#- role: stacks/wordpress # TODO change to soft/peer dep

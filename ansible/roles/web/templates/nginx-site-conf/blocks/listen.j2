@@ -1,0 +1,16 @@
+{% if ansible_facts.packages['nginx'][0].version is version("1.25.1", "<") %}
+        listen *:443 ssl http2;
+        listen [::]:443 ssl http2;
+{% else %}
+        listen *:443 ssl;
+        listen [::]:443 ssl;
+        http2 on;
+{% if site.http3|default(true) %}
+        listen *:443 quic;
+        listen [::]:443 quic;
+        http3 on;
+{% endif %}
+
+        add_header Alt-Svc 'h3=":443"; ma=86400';
+        quic_retry on;
+{% endif %}

@@ -1,0 +1,9 @@
+{% if cloudflared is defined and cloudflared is truthy %}
+        # Trust cloudflared for client IPs
+        set_real_ip_from 127.0.0.1;
+        set_real_ip_from ::1;
+        real_ip_header CF-Connecting-IP;
+        #real_ip_header X-Forwarded-For;
+{% endif %}
+{# TODO: else allow server to specify a set of ranges (e.g. for *.home.ctmartin.me proxy or Cloudflare via public internet) #}
+{# TODO: consider if other IP range mappings should go here, e.g. the $internal_ip WIP/draft in `git.j2` for redirecting to internal git forge #}

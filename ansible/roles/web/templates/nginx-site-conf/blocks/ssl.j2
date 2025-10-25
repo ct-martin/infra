@@ -1,0 +1,8 @@
+        # SSL/TLS Options
+        ssl_certificate /etc/letsencrypt/live/{{ site.certid|default(site.id) }}/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/{{ site.certid|default(site.id) }}/privkey.pem;
+        # Let's Encrypt has turned off their OCSP responder; ensure stapling is off
+        ssl_stapling off;
+        ssl_stapling_verify off;
+        #ssl_trusted_certificate /etc/letsencrypt/live/{{ site.certid|default(site.id) }}/chain.pem;
+        include /etc/letsencrypt/options-ssl-nginx.conf; # currently copied from /snap/certbot/current/lib/python3.12/site-packages/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf

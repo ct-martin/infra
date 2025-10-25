@@ -1,0 +1,351 @@
+{% include "blocks/header-comment.j2" %}
+# See also:
+# * Useful reference: https://easyengine.io/wordpress-nginx/tutorials/
+
+upstream php {
+        server unix:/var/run/php/php-fpm-{{ site.id }}.sock;
+}
+
+# WordPress doesn't like having multiple domains directly resolving to it
+# To compensate, we're going to redirect additional domains to the primary WordPress domain
+{% include "blocks/additional-domains.j2" %}
+
+server {
+{% include "blocks/listen.j2" %}
+
+        server_name {{ site.domain }};
+
+{% include "blocks/root.j2" %}
+        index index.php index.html;
+
+{% include "blocks/real-ip.j2" %}
+
+{% include "blocks/ssl.j2" %}
+
+{% include "blocks/logs.j2" %}
+
+        # Security Headers
+        server_tokens off;
+        #add_header Content-Security-Policy   "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https: data:; media-src 'self' https:; object-src 'none'; frame-ancestors 'self';" always;
+        add_header Content-Security-Policy-Report-Only   "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https: data:; media-src 'self' https:; object-src 'none'; frame-ancestors 'self';" always;
+        {% if site.csp is defined and site.csp is truthy %}
+        #add_header Content-Security-Policy   "{% for directive, policy in site.csp %}{{ directive }}{{ policy|join(' ') }}; {% endfor %}" always;
+        {% endif %}
+        {% if site.csp_report is defined and site.csp_report is truthy %}
+        #add_header Content-Security-Policy-Report-Only   "{% for directive, policy in site.csp %}{{ directive }}{{ policy|join(' ') }}; {% endfor %}" always;
+        {% endif %}
+        add_header Cross-Origin-Resource-Policy "same-site" always;
+        add_header Permissions-Policy        "browsing-topics=(), interest-cohort=()" always;
+        #add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+        add_header Referrer-Policy           "same-origin" always;
+        #add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header X-Frame-Options           "SAMEORIGIN" always; # using SAMEORIGIN instead of DENY to allow PDF embeds
+        add_header X-Permitted-Cross-Domain-Policies "none" always;
+        add_header X-XSS-Protection          "1; mode=block" always;
+
+{% include "blocks/common-files.j2" %}
+
+{% include "blocks/rewrites.j2" %}
+
+{% include "blocks/block-dumb-attacks.j2" %}
+
+        # Block attempting to access wp-config.php
+        location = /wp-config.php {
+                deny all;
+        }
+
+        # Block wp-config.txt (used during install)
+        location = /wp-config.txt {
+                deny all;
+        }
+
+        # Limit cron to localhost (and admin IPs if applicable)
+        location = /wp-cron.php {
+                allow 127.0.0.1;
+                allow ::1;
+{% for cidr in (site.admin_ips|default([])) + (server_ips|default([])) %}
+                allow {{ cidr }};
+{% endfor %}
+                deny all;
+
+                include /etc/nginx/fastcgi_params;
+                fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                fastcgi_pass php;
+        }
+        
+        # Return 403 forbidden for readme.(txt|html) or license.(txt|html) or example.(txt|html)
+        if ($uri ~* "^.+(readme|license|example)\.(txt|html)$") {
+                return 403;
+        }
+        
+        # Deny backup extensions & log files
+        location ~* ^.+\.(bak|log|old|orig|original|php#|php~|php_bak|save|swo|swp|sql)$ {
+                deny all;
+                access_log off;
+                log_not_found off;
+        }
+
+        # Deny Updraft backups
+        location ~ /wp-content/updraft/ {
+                allow 127.0.0.1;
+                allow ::1;
+{% for cidr in site.admin_ips %}
+                allow {{ cidr }};
+{% endfor %}
+                deny all;
+        }
+
+        location ~ /wp-content/uploads/broken-link-checker/ {
+{% for cidr in site.admin_ips %}
+                allow {{ cidr }};
+{% endfor %}
+                deny all;
+        }
+
+        # Don't allow .php files in the uploads/ folder
+        location ~ /wp-content/uploads/ {
+                location ~* \.php$ {
+                        deny all;
+                }
+        }
+
+        # Deny access to any files with a .php extension in the uploads directory
+        # Works in sub-directory installs and also in multisite network
+        # Keep logging the requests to parse later (or to pass to firewall utilities such as fail2ban)
+        #location ~* /(?:uploads|files)/.*\.php$ {
+        #        deny all;
+        #}
+
+        # Block PHP files in uploads/ (alternative to above)
+        location ~* ^/wp-content/uploads/.*.php$ {
+                return 403;
+        }
+
+        # Block comment spam
+        #location ~* wp-comments-posts\.php {
+        #        if ($http_referer !~ ^(https://example.com) ) {
+        #                return 405;
+        #        }
+        #}
+
+        # Block loading includes (internal files)
+        # See: https://wordpress.org/documentation/article/hardening-wordpress/#securing-wp-includes
+        location ~ /wp-includes/ {
+                location ^~ /wp-includes/[^/]+\.php {
+                        deny all;
+                }
+
+                location /wp-includes/css/ {
+                        location ~* \.php {
+                                deny all;
+                        }
+                }
+
+                location /wp-includes/js/tinymce/langs/ {
+                        location ~* \.php {
+                                deny all;
+                        }
+                }
+
+                location /wp-includes/theme-compat/ {
+                        deny all;
+                }
+        }
+
+{% if site.admin_ips is defined or server_ips is defined %}
+        # Also restrict admin if applicable
+        #location = /wp-admin/admin-ajax.php {
+        #        allow all;
+        #}
+        #location ~ /wp-admin/ {
+        #        add_header Content-Security-Policy-Report-Only   "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; media-src 'self' https:; object-src 'none'; frame-ancestors 'self';" always;
+{% for cidr in (site.admin_ips|default([])) + (server_ips|default([])) %}
+        #        allow {{ cidr }};
+{% endfor %}
+        #        deny all;
+        #}
+
+        # Restrict sensitive pages to admin IPs
+        location = /wp-login.php {
+{% for cidr in site.admin_ips %}
+                #allow {{ cidr }};
+{% endfor %}
+                #deny all;
+                
+                include /etc/nginx/fastcgi_params;
+                fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                fastcgi_pass php;
+        }
+
+        location = /xmlrpc.php {
+{% for cidr in site.admin_ips %}
+                #allow {{ cidr }};
+{% endfor %}
+                #deny all;
+
+                include /etc/nginx/fastcgi_params;
+                fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                fastcgi_pass php;
+        }
+{% endif %}
+
+{% if false %}
+        # From Sucuri blog; could probably tweak to make a little better
+        #location ~ ^/(wp-admin|wp-login\.php) {
+        #        allow 1.2.3.4;
+        #        deny all;
+        #}
+
+        # BEGIN DigitalOcean Nginx Config Generator
+        # WordPress: allow TinyMCE
+        #location = /wp-includes/js/tinymce/wp-tinymce.php {
+        #       include nginxconfig.io/php_fastcgi.conf;
+        #}
+
+        # WordPress: deny wp-content, wp-includes php files
+        #location ~* ^/(?:wp-content|wp-includes)/.*\.php$ {
+        #       deny all;
+        #}
+
+        # WordPress: deny wp-content/uploads nasty stuff
+        #location ~* ^/wp-content/uploads/.*\.(?:s?html?|php|js|swf)$ {
+        #       deny all;
+        #}
+
+        # WordPress: SEO plugin
+        #location ~* ^/wp-content/plugins/wordpress-seo(?:-premium)?/css/main-sitemap\.xsl$ {}
+
+        # WordPress: deny wp-content/plugins (except earlier rules)
+        #location ~ ^/wp-content/plugins {
+        #       deny all;
+        #}
+
+        # WordPress: deny general stuff
+        #location ~* ^/(?:xmlrpc\.php|wp-links-opml\.php|wp-config\.php|wp-config-sample\.php|readme\.html|license\.txt)$ {
+        #       deny all;
+        #}
+        # END DigitalOcean Nginx Config Generator
+{% endif %}
+
+{% if site.wp_cache is defined %}
+{% if site.wp_cache == 'w3tc-enhanced' %}
+        # W3 Total Cache Nginx
+        include {{ site.directory }};
+{% else %}
+        # WP Caching
+        # Bypasses WordPress entirely (where possible) to serve pages
+
+        set $cache_uri $request_uri;
+        
+        # POST requests and urls with a query string should always go to PHP
+        if ($request_method = POST) {
+                set $cache_uri 'null cache';
+        }
+        
+        if ($query_string != "") {
+                set $cache_uri 'null cache';
+        }
+        
+        # Don't cache uris containing the following segments
+        if ($request_uri ~* "(/wp-admin/|/xmlrpc.php|/wp-(app|cron|login|register|mail).php|wp-.*.php|/feed/|index.php|wp-comments-popup.php|wp-links-opml.php|wp-locations.php|sitemap(_index)?.xml|[a-z0-9_-]+-sitemap([0-9]+)?.xml)") {
+                set $cache_uri 'null cache';
+        }
+        
+        # Don't use the cache for logged in users or recent commenters
+        if ($http_cookie ~* "comment_author|wordpress_[a-f0-9]+|wp-postpass|wordpress_logged_in") {
+                set $cache_uri 'null cache';
+        }
+
+        # Use cached or actual file if they exists, otherwise pass request to WordPress
+{% if site.wp_cache == "wpsc" %}
+        location / {
+                try_files /wp-content/cache/supercache/$http_host/$cache_uri/index.html $uri $uri/ /index.php?$args ;
+        }
+{% elif site.wp_cache == "w3tc" %}
+        location / {
+                try_files /wp-content/w3tc/pgcache/$cache_uri/_index.html $uri $uri/ /index.php?$args ;
+        }
+{% else %}
+        location / {
+                try_files $uri $uri/ /index.php?$args;
+        }
+{% endif %}
+{% endif %}
+{% else %}
+        location / {
+                try_files $uri $uri/ /index.php?$args;
+        }
+{% endif %}
+{% if false %}
+        # RankMath Nginx Config
+        # Note: this probably isn't needed due to the /index.php?args in try_files but RankMath complains about it anyway
+
+        # START Nginx Rewrites for Rank Math Sitemaps
+        rewrite ^/sitemap_index.xml$ /index.php?sitemap=1 last;
+        rewrite ^/([^/]+?)-sitemap([0-9]+)?.xml$ /index.php?sitemap=$1&sitemap_n=$2 last;
+        rewrite ^/([a-z]+)?-sitemap\.xsl$ /index.php?xsl=$1 last;
+        # END Nginx Rewrites for Rank Math Sitemaps
+{% endif %}
+
+        # Allow higher upload limit within WP Admin
+        location ~ ^/wp-admin/.*\.php$ {
+                try_files $uri =404;
+
+                # Note: some guides recommend the following, however, it supposedly doesn't work with WordPress (has this changed since?)
+                #fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+                #if (!-f $document_root$fastcgi_script_name) {
+                #        return 404;
+                #}
+
+                # Raise upload size limit
+                client_max_body_size 100M;
+
+                #fastcgi_intercept_errors on;
+                include /etc/nginx/fastcgi_params;
+                fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                fastcgi_hide_header Pragma;
+                fastcgi_hide_header Server-Timing;
+                fastcgi_pass php;
+        }
+
+        location ~ \.php$ {
+                try_files $uri =404;
+
+                # Note: some guides recommend the following, however, it supposedly doesn't work with WordPress (has this changed since?)
+                #fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+                #if (!-f $document_root$fastcgi_script_name) {
+                #        return 404;
+                #}
+
+                #client_max_body_size 100M;
+
+                #fastcgi_intercept_errors on;
+                include /etc/nginx/fastcgi_params;
+                fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                fastcgi_hide_header Pragma;
+                fastcgi_hide_header Server-Timing;
+                fastcgi_pass php;
+        }
+
+{% if false %}
+        #location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+        #        expires max;
+        #        log_not_found off;
+        #}
+
+        # assets, media
+        #location ~* \.(?:css(\.map)?|js(\.map)?|jpe?g|png|gif|ico|cur|heic|webp|tiff?|mp3|m4a|aac|ogg|midi?|wav|mp4|mov|webm|mpe?g|avi|ogv|flv|wmv)$ {
+        #       expires 7d;
+        #}
+
+        # svg, fonts
+        #location ~* \.(?:svgz?|ttf|ttc|otf|eot|woff2?)$ {
+        #       add_header Access-Control-Allow-Origin "*";
+        #       expires    7d;
+        #}
+
+        #gzip_proxied    any;
+        #gzip_types      text/plain text/css text/xml application/json text/javascript application/rss+xml application/atom+xml image/svg+xml;
+{% endif %}
+}
