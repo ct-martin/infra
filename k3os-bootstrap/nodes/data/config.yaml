@@ -1,6 +1,0 @@
-hostname: data-k3os
-k3os:
-  labels:
-    k3os.io/upgrade: enabled
-ssh_authorized_keys:
-- "github:ct-martin" # Updates on reboot
