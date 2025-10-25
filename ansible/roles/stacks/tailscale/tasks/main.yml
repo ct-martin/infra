@@ -1,0 +1,23 @@
+---
+- name: Add Tailscale Repo
+  become: true
+  ansible.builtin.deb822_repository:
+    name: tailscale
+    uris: "https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }}"
+    suites: "{{ ansible_distribution_release }}"
+    components: main
+    signed_by: "https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }}/{{ ansible_distribution_release }}.noarmor.gpg"
+- name: Install Tailscale
+  become: true
+  ansible.builtin.apt:
+    name: tailscale
+    state: present
+    update_cache: true
+- name: "Run Tailscale (NOTE: YOU MAY NEED TO APPROVE IN ADMIN DASHBOARD)"
+  become: true
+  ansible.builtin.command:
+    cmd: "tailscale up --accept-dns=false --accept-routes=false --shields-up=false --ssh=false {% if tskey is defined %}--auth-key={{ tskey }}{% endif %} {% if tailscale_operator is defined %}--operator {{ tailscale_operator }}{% endif %}"
+  when: "'tailscale0' not in ansible_interfaces or tskey is defined"
+  no_log: true
+  #vars:
+  #  tskey: ''

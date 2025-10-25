@@ -1,26 +1,45 @@
 ---
-# Baseline
-# Note: keys.yml is needed before packages.yml to prevent apt failing
-# when repo keys are rotated (give us a chance to refresh first).
-- include_tasks: users-root.yml
+# Ensure hostname is correct (and has full FQDN)
+# Note: this does not account for all cases (e.g. /etc/hosts, particularly if cloud-init generates the file)
+- name: Ensure hostname is correct and is the full FQDN
+  become: true
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+# Create/delete/update user accounts
 - include_tasks: users.yml
   loop: "{{ users|default([]) }}"
   loop_control:
     loop_var: user
     label: "{{ user.username }}"
-- include_tasks: keys.yml
+# Disable root account (only allow root access via sudo)
+- name: Ensure root account is locked
+  become: true
+  ansible.builtin.user:
+    name: root
+    password: '*'
+# Delete any default accounts used by hosts for provisioning
+- name: Delete any default accounts used for provisioning
+  become: true
+  ansible.builtin.user:
+    name: "{{ item }}"
+    state: absent
+  loop:
+  - ubuntu
+  - debian
+
+# Base packages to ensure exist
 - include_tasks: packages.yml
 
-# Packages that need
-- include_tasks: tailscale.yml
-  when: "tailscale is defined and tailscale is truthy"
-- include_tasks: nextdns.yml
-  when: "nextdns is defined and nextdns is truthy"
-- include_tasks: cloudflared.yml
-  when: "cloudflared is defined and cloudflared is truthy"
-- include_tasks: docker-ce.yml
-  when: "docker is defined and docker is truthy and docker == 'docker-ce'"
-- include_tasks: nvidia-cuda.yml
-  when: "nvidia is defined and nvidia is truthy"
-- include_tasks: microk8s.yml
-  when: "kubernetes is defined and kubernetes is truthy and kubernetes == 'microk8s'"
+# Conditional packages
+- include_tasks: unattended.yml
+  when: "unattended_upgrades is defined and unattended_upgrades is truthy"
+
+# Other conditional configurations
+- name: Configure cron jobs
+  become: true
+  ansible.builtin.cron: "{{ cron_item }}"
+  loop: "{{ cron }}"
+  loop_control:
+    loop_var: cron_item
+    label: "{{ cron_item.name }}"
+  when: "cron is defined and cron is truthy"

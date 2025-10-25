@@ -1,0 +1,43 @@
+---
+- name: "Create/override service"
+  become: true
+  ansible.builtin.template:
+    src: "templates/services/{{ item }}.xml.j2"
+    dest: "/etc/firewalld/services/{{ item }}.xml"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  notify: restart_firewalld
+  loop:
+  - tailscale
+- name: "Create/override zone"
+  become: true
+  ansible.builtin.template:
+    src: "templates/zones/{{ item }}.xml.j2"
+    dest: "/etc/firewalld/zones/{{ item }}.xml"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  notify: restart_firewalld
+  loop:
+  - tailscale
+  - public
+  - docker
+- name: "Create/override policy"
+  become: true
+  ansible.builtin.template:
+    src: "templates/policies/{{ item }}.xml.j2"
+    dest: "/etc/firewalld/policies/{{ item }}.xml"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  notify: restart_firewalld
+  loop:
+  - "docker-forwarding"
+  - "docker-allow-outgoing"
+- name: Enable firewalld
+  become: true
+  ansible.builtin.systemd:
+    name: firewalld
+    state: started
+    enabled: true

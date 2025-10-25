@@ -1,0 +1,42 @@
+---
+- name: Add Docker CE Repo
+  become: true
+  ansible.builtin.deb822_repository:
+    name: docker
+    uris: "https://download.docker.com/linux/{{ ansible_distribution | lower }}"
+    suites: "{{ ansible_distribution_release }}"
+    components: stable
+    signed_by: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+- name: Install Docker CE
+  become: true
+  ansible.builtin.apt:
+    name:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    - docker-buildx-plugin
+    - docker-compose-plugin
+    state: present
+    update_cache: true
+- name: Start & Enable Docker
+  become: true
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+#- name: Start & Enable Docker-containerd
+#  become: true
+#  ansible.builtin.systemd:
+#    name: containerd
+#    state: started
+#    enabled: true
+
+# Grant docker group/permissions to specified users
+# TODO: removing permissions
+- name: Give user {{ item }} Docker management rights
+  become: true
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker
+    append: yes
+  loop: "{{ docker_users|default([]) }}"

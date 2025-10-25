@@ -1,11 +1,11 @@
 ---
-- name: Update all packages & autoremove old packages
-  become: true
-  ansible.builtin.apt:
-    name: "*"
-    autoremove: true
-    state: latest
-    update_cache: true
+#- name: Update all packages & autoremove old packages
+#  become: true
+#  ansible.builtin.apt:
+#    name: "*"
+#    autoremove: true
+#    state: latest
+#    update_cache: true
 - name: Install common packages
   become: true
   ansible.builtin.apt:
@@ -16,7 +16,10 @@
     - ca-certificates
     - curl
     - git
+    - htop
     - less
+    - make
+    #- members
     #- mtr-tiny # Don't enable on server, requires SUID binary
     - nano
     - sudo
@@ -33,6 +36,7 @@
     state: absent
     name:
     - pastebinit
+    - ssl-cert # snakeoil cert
 #- name: Check if reboot needed
 #  ansible.builtin.stat:
 #    path: /var/run/reboot-required
@@ -43,3 +47,15 @@
 #  when: stat_reboot_required.stat.exists
 #  ansible.builtin.reboot:
 #    msg: Rebooting to finish system updates
+- name: Install additional packages (as specified)
+  become: true
+  ansible.builtin.apt:
+    state: present
+    name: "{{ install_additional_packages }}"
+  when: "install_additional_packages is defined and install_additional_packages is truthy"
+- name: Remove additional packages (as specified)
+  become: true
+  ansible.builtin.apt:
+    state: absent
+    name: "{{ remove_packages }}"
+  when: "remove_packages is defined and remove_packages is truthy"

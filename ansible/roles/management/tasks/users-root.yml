@@ -1,6 +1,0 @@
----
-- name: Ensure root account is locked
-  become: true
-  ansible.builtin.user:
-    name: root
-    password: '*'

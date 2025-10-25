@@ -1,0 +1,122 @@
+---
+# Nvidia structures its CUDA repos using a string formatted as <distro>/<arch>
+# This string is also needed to install the cuda-keyring, which manages
+# the repo's GPG key & apt source.
+#
+# If a configuration string isn't passed (e.g. with host vars), then
+# the playbook will attempt to guess it. If it can't guess correctly,
+# you'll need to specify it manually.
+#
+# You can see the repos here: https://developer.download.nvidia.com/compute/cuda/repos/
+# CUDA Installation Guide for Linux: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/
+#
+# TODO list:
+# * Allow specifying CUDA versions (e.g. specifying 12.2 to install cuda-12-2)
+# * CUDA appears to manage the driver version and install the correct kernel
+#   headers - need to verify this is true.
+#
+# Notes:
+# * For RHEL, you'd want ansible_distribution_major_version instead of ansible_distribution_version
+- name: Print Nvidia distro/arch string if set
+  ansible.builtin.debug:
+    msg: "Found Nvidia distro/arch string: {{ nvidia_distro_arch }}"
+  when: "nvidia_distro_arch is defined"
+- name: Guess Nvidia distro/arch string
+  ansible.builtin.debug:
+    msg: "Nvidia distro/arch string not set; guessing: {{ [ansible_distribution|lower,ansible_distribution_version|replace('.',''),'/',ansible_architecture]|join('') }}"
+
+# Remove outdated keys
+#- name: Ensure Nvidia outdated signing keys are not present
+#  become: true
+#  ansible.builtin.apt_key:
+#    # TODO key IDs
+#    state: absent
+
+# CUDA
+- name: Ensure cuda-keyring is installed (manages repo)
+  become: true
+  ansible.builtin.apt:
+    deb: "https://developer.download.nvidia.com/compute/cuda/repos/{{ nvidia_distro_arch | default([ansible_distribution|lower,ansible_distribution_version|replace('.',''),'/',ansible_architecture]|join('')) }}/cuda-keyring_1.1-1_all.deb"
+  when: "'cuda-keyring' not in ansible_facts.packages"
+- name: Ensure CUDA is installed
+  become: true
+  ansible.builtin.apt:
+    name:
+    - cuda
+    #- cuda-toolkit # implied by cuda, at least in theory
+    #- nvidia-open # implied by cuda, at least in theory
+    state: present
+    update_cache: true
+# Pin/hold CUDA version - upgrading is a somewhat more complicated process
+# The best way to upgrade CUDA is to `apt purge` the current version, `apt autoremove` to remove deps
+# (since dependencies are tied to the CUDA version) and then `apt install`
+- name: Pin/hold CUDA version (upgrades require a more complicated process)
+  become: true
+  ansible.builtin.dpkg_selections:
+    name: cuda
+    selection: hold
+
+# Install cuDNN
+- name: Ensure cuDNN is installed
+  become: true
+  ansible.builtin.apt:
+    name:
+    - cudnn
+    #- libcudnn8 # some libraries like ctranslate2 use outdated version
+
+# Install cuBLAS/HPC
+- name: Ensure cuBLAS/HPC repository is configured
+  become: true
+  ansible.builtin.deb822_repository:
+    name: nvhpc
+    uris: "https://developer.download.nvidia.com/hpc-sdk/{{ ansible_distribution | lower }}/{{ ansible_architecture }}"
+    suites: "/"
+    signed_by: "https://developer.download.nvidia.com/hpc-sdk/ubuntu/DEB-GPG-KEY-NVIDIA-HPC-SDK"
+- name: Ensure cuBLAS/HPC is installed
+  become: true
+  ansible.builtin.apt:
+    name:
+    - nvhpc
+    state: present
+    update_cache: true
+
+# Container Runtime
+# https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+#- name: Ensure nvidia-container-toolkit-keyring is installed (manages repo)
+#  become: true
+#  ansible.builtin.apt_key:
+#    url: "https://nvidia.github.io/libnvidia-container/gpgkey"
+#    state: present
+#    keyring: /usr/share/keyrings/nvidia-container-toolkit.gpg
+#  when: "nvidia is truthy and (docker is truthy or kubernetes is truthy)"
+- name: Add Nvidia Container Toolkit Repo
+  become: true
+  ansible.builtin.deb822_repository:
+    name: nvidia-container-toolkit
+    uris: "https://nvidia.github.io/libnvidia-container/stable/deb/{{ ansible_arch }}"
+    suites: "/"
+    signed_by: "https://nvidia.github.io/libnvidia-container/gpgkey"
+- name: Ensure Nvidia Container nvidia-container-toolkit is installed
+  become: true
+  ansible.builtin.apt:
+    name: nvidia-container-toolkit
+    state: present
+    update_cache: true
+# TODO: configure docker & microk8s roles in their respective roles: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+
+# Optionally prevent X11 from using Nvidia GPU (use integrated graphics to allow full GPU memory to be dedicated to AI/etc.)
+# Note: this doesn't account for wayland
+- name: Disable automatically using GPU for X11/Wayland
+  become: true
+  ansible.builtin.systemd:
+    name: gpu-manager
+    enabled: false
+    status: stopped
+  when: "nvidia_dedicated_gpu|default(False) is truthy"
+- name: Remove config for using GPU for screens
+  become: true
+  ansible.builtin.file:
+    path: /usr/share/X11/xorg.conf.d/11-nvidia-offload.conf
+    state: absent
+  when: "nvidia_dedicated_gpu|default(False) is truthy"
+# TODO: test is this is the only config file that needs changing

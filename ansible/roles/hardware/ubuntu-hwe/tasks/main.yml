@@ -1,0 +1,10 @@
+---
+# The Ubuntu "Hardware Enablement" (HWE) kernel provides newer kernel releases
+# which typically includes better hardware support and performance
+- name: Ensure Hardware Enablement kernel is installed
+  become: true
+  ansible.builtin.apt:
+    name: linux-generic-hwe-{{ ansible_distribution_version }}
+    state: present
+    update_cache: true
+  when: "'linux-generic' in ansible_facts.packages"

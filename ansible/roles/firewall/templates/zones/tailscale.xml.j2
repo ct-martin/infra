@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<zone target="ACCEPT">
+  <short>Tailscale (Trusted)</short>
+  <description>All network connections are accepted.</description>
+  <interface name="tailscale0"/>
+  <forward/>
+</zone>
+{#
+<zone>
+  <short>Tailscale (Internal)</short>
+  <description>For use on internal networks. You mostly trust the other computers on the networks to not harm your computer. Only selected incoming connections are accepted.</description>
+  <service name="ssh"/>
+  <service name="mdns"/>
+  <service name="samba-client"/>
+  <service name="dhcpv6-client"/>
+  <service name="docker-registry"/>
+  <service name="https"/>
+  <service name="http3"/>
+  <service name="wireguard"/>
+  <forward/>
+</zone>
+#}

@@ -1,0 +1,29 @@
+---
+# MySQL
+- name: Install MySQL (MariaDB)
+  become: true
+  ansible.builtin.apt:
+    state: present
+    name:
+    - mariadb-server
+    - python3-pymysql
+
+# MySQL Cleanup
+- name: Cleanup default install of MySQL (MariaDB)
+  when: "'lemp' in web_stacks|default([]) or 'wordpress' in web_stacks|default([])"
+  block:
+  - name: Remove anonymous user
+    become: true
+    community.mysql.mysql_user:
+      name: ''
+      host_all: true
+      state: absent
+      check_implicit_admin: true
+      login_unix_socket: /run/mysqld/mysqld.sock
+  - name: Remove test database
+    become: true
+    community.mysql.mysql_db:
+      name: test
+      state: absent
+      check_implicit_admin: true
+      login_unix_socket: /run/mysqld/mysqld.sock

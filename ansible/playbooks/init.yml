@@ -1,0 +1,10 @@
+---
+- hosts: all
+  name: "Setup"
+  tags: always
+  gather_facts: true
+- hosts: all
+  name: "Basic Management"
+  tags: basic
+  roles:
+  - management

@@ -1,3 +1,4 @@
+---
 # Pre-req - install snapd
 # Modified from: https://github.com/geerlingguy/ansible-role-certbot/blob/master/tasks/install-with-snap.yml
 - name: Install snapd
@@ -29,13 +30,16 @@
   changed_when: true
   failed_when: false
   when: snapd_install is changed
-
-# MicroK8s
-- name: Install MicroK8s
+# Specified snaps to install/remove
+- name: Install additional packages (as specified)
   become: true
   community.general.snap:
-    name:
-    - microk8s
     state: present
-    classic: true
-# TODO start/enable in systemd
+    name: "{{ install_snaps }}"
+  when: "install_snaps is defined and install_snaps is truthy"
+- name: Remove additional packages (as specified)
+  become: true
+  community.general.snap:
+    state: absent
+    name: "{{ remove_snaps }}"
+  when: "remove_snaps is defined and remove_snaps is truthy"

@@ -29,11 +29,29 @@ Dry run (note that this doesn't work with some modules):
 
 Run against all hosts:
 
-`ansible-playbook playbooks.playbook.yml`
+`ansible-playbook playbooks/playbook.yml`
 
 Run against a single host or group:
 
 `ansible-playbook -l web.ctmartin.me playbooks/playbook.yml`
+
+Run against a host for the first time (with an atypical login):
+
+Make sure the host is in the `hosts.ini` inventory file and that any necessary host vars are set (particularly for managing logins).
+There is a playbook (`init.yml`) that's designed to assist in provisioning machines.
+This playbook is not comprehensive - its sole purpose is to get from a newly provisioned machine to something the full playbook can be run against.
+
+Note that it should be expected for this command to fail since it's updating the password for the user running Ansible.
+
+`ansible-playbook -l host-of-new-machine -e ansible_host=192.168.1.10 -u christian -k playbooks/init.yml`
+
+You may need to install `sshpass` on the host running Ansible.
+If you haven't logged into the machine at all, you may need either do so (to add it to the host keys file) or run with `-e ansible_host_key_checking=false`
+
+Alternatively, you can manually set the password & SSH public keys, then run the usual command.
+
+Note that some hosts give you a temporary password and require you to manually sign in and change the password;
+Ansible (or at least this playbook) can't do that interactive workflow for you.
 
 ## Useful Documentation
 
@@ -56,3 +74,4 @@ Run against a single host or group:
 ## Tips
 
 * Running Ansible can be slow; sometimes it's useful to temporarily comment out roles or `include_tasks` statements that aren't applicable in the current run (for example, aren't being changed/affected)
+* Create encrypted variables with `ansible-vault encrypt_string`

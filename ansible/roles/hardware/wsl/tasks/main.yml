@@ -1,0 +1,10 @@
+---
+#- name: Install common packages
+#  become: true
+#  ansible.builtin.apt:
+#    state: present
+#    name:
+#    # For WSLg (WSL with GUI support):
+#    - libxrender1
+#    - libxtst6
+#    - libxi6

@@ -15,21 +15,34 @@
     password: '{{user.password_hash|default("!")}}'
     create_home: true
     groups: "{{user.groups}}"
-    update_password: "{{ (user.password_overwrite|default(False) is truthy) | ternary('always','on_create') }}"
+    update_password: "{{ (user.password_overwrite|default(True) is truthy) | ternary('always','on_create') }}"
   when: "user.should_exist|default(True) is truthy"
-- name: "Add SSH Keys {{user.username}}"
+- name: "Add SSH Keys for {{user.username}}"
   become: true
   ansible.posix.authorized_key:
     user: "{{ user.username }}"
     state: present
     exclusive: true
     key: "{{ user.ssh_keys }}"
-  when: "user.should_exist|default(True) is truthy and user.ssh_keys|default([])|length > 0"
-- name: "Remove SSH Keys {{user.username}} (none specified)"
+  when:
+  - "user.should_exist|default(True) is truthy"
+  - "user.ssh_keys|default([])|length > 0"
+- name: "Remove SSH Keys for {{user.username}} (none specified)"
   become: true
   ansible.posix.authorized_key:
     user: "{{ user.username }}"
     state: present
     key: ""
     exclusive: true
-  when: "user.should_exist|default(True) is truthy and user.ssh_keys|default([])|length == 0"
+  when:
+  - "user.should_exist|default(True) is truthy"
+  - "user.ssh_keys|default([])|length == 0"
+- name: Create bash aliases for {{ user.username }} (if configured)
+  become: true
+  ansible.builtin.template:
+    src: "templates/bash_aliases/{{ user.username }}.j2"
+    dest: "/home/{{ user.username }}/.bash_aliases"
+    owner: "{{ user.username }}"
+    group: "{{ user.username }}"
+    mode: "0755"
+  when: (role_path + '/templates/bash_aliases/' + user.username + '.j2') is ansible.builtin.file

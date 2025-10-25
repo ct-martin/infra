@@ -1,0 +1,8 @@
+---
+- name: Install Hugo snap
+  become: true
+  community.general.snap:
+    name:
+    - hugo
+    channel: extended/stable
+    state: present

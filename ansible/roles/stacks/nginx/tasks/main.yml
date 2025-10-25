@@ -1,0 +1,35 @@
+---
+# Web server/proxy
+- name: Install Nginx
+  become: true
+  ansible.builtin.apt:
+    state: present
+    name:
+    - nginx
+- name: Install Brotli (compression) module for Nginx if requested
+  become: true
+  ansible.builtin.apt:
+    state: present
+    name:
+    - libnginx-mod-http-brotli-*
+  when: "nginx_mod_brotli is defined and nginx_mod_brotli is truthy"
+
+# Get Nginx version
+- name: Gather package facts (for version info)
+  ansible.builtin.package_facts:
+    manager: auto
+#- name: Debug
+#  ansible.builtin.debug:
+#    msg: "Nginx version: {{ ansible_facts.packages['nginx'][0].version }}"
+
+# Basics
+- include_tasks: default.yml
+- include_tasks: mime.yml
+
+# Get running (put after config so if have an invalid config there's a chance of being able to fix it)
+- name: Enable Nginx
+  become: true
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: true
+    state: started

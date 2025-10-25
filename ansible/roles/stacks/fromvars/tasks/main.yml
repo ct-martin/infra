@@ -1,0 +1,10 @@
+---
+# To do manually / without community collections:
+# https://stackoverflow.com/a/63268576
+# (also relevant: https://stackoverflow.com/a/77117694)
+- name: Include roles listed in `stacks`/`stacks_*` vars
+  ansible.builtin.include_role:
+    name: "stacks/{{ stack_role_name }}"
+  loop: "{{ lookup('community.general.merge_variables', '^stacks(_.+)?$', initial_value=[]) }}" # `stacks` or begins with `stacks_`
+  loop_control:
+    loop_var: stack_role_name

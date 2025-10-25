@@ -1,4 +1,15 @@
 ---
+# TODO: Use groups or another smarter way to detect
+# This playbook makes two assumptions:
+# 1. Remote access is done over an SSH connection, therefore, if SSH should be configured then the server will be installed
+# 2. If firewall is desired, UFW will be installed (otherwise may be using something like a virtualization-managed firewall)
+# Re: #2, UFW is not compatible with Docker (Docker ports will be forwarded even if UFW is set to deny)
+- name: Gather the package facts
+  ansible.builtin.package_facts:
+    manager: auto
+# Configure SSH server for remote access
 - include_tasks: ssh.yml
+  when: "'openssh-server' in ansible_facts.packages"
 # Run firewall rules last so we don't block ourselves before access is configured
-- include_tasks: firewall.yml
+#- include_tasks: ufw.yml
+#  when: "'ufw' in ansible_facts.packages"

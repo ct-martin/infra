@@ -1,10 +1,43 @@
 ---
 - hosts: all
-  name: "Basic Configuration"
+  name: "Setup"
+  tags: always
+  gather_facts: true
+- hosts: all
+  name: "Basic Management"
+  tags: basic
   roles:
   - management
   - security
-- hosts: web
-  name: "Set up web environment"
+- name: Setup Nvidia hardware
+  hosts: nvidia
+  tags: hardware
   roles:
-  - web-custom
+  - hardware/ubuntu-hwe
+  - hardware/nvidia
+- name: Setup Proxmox VMs
+  hosts: vm_proxmox
+  tags: hardware
+  roles:
+  - hardware/pve-guest
+# Note: this firewall role is intended for hosts that don't/can't
+# have another firewall in front of them (e.g. a "cloud firewall").
+# It's a bit opinionated and assumes some "stacks" are installed
+# rather than not protect them or trying to guess what's enabled.
+# If the host has another firewall in front of it, this is
+# probably not needed unless it's being used for testing.
+- name: Setup Firewall
+  hosts: firewall
+  tags: firewall
+  roles:
+  - firewall
+- name: Setup stacks
+  hosts: all
+  tags: stacks
+  roles:
+  - stacks/fromvars
+- name: Setup web servers
+  hosts: web
+  tags: web
+  roles:
+  - web

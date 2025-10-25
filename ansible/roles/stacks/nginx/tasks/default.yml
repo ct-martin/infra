@@ -1,0 +1,9 @@
+---
+- name: Set default Nginx config (denies on unknown connection)
+  become: true
+  ansible.builtin.template:
+    src: default.j2
+    dest: /etc/nginx/sites-available/default
+    owner: www-data
+    group: www-data
+    mode: '0644'

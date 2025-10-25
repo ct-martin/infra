@@ -1,0 +1,37 @@
+- name: "Patch Nginx MIME types for RFC 9239 (.js & .mjs)"
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/nginx/mime.types
+    regexp: '(application|text)/javascript'
+    line: '    text/javascript                                  js mjs;'
+    insertafter: 'image/jpeg'
+    state: present
+  notify: reload_nginx
+- name: "Patch Nginx MIME types for RFC 7303 (.xml)"
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/nginx/mime.types
+    regexp: '(application|text)/xml'
+    line: '    application/xml                                  xml;'
+    insertafter: 'text/css'
+    state: present
+  notify: reload_nginx
+- name: "Patch Nginx MIME types for WebP"
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/nginx/mime.types
+    regexp: 'image/webp'
+    line: '    image/webp                                       webp;'
+    insertafter: 'image/svg'
+    state: present
+  notify: reload_nginx
+- name: "Patch Nginx MIME types for AVIF"
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/nginx/mime.types
+    regexp: 'image/avif'
+    line: '    image/avif                                       avif;'
+    insertafter: 'image/webp'
+    state: present
+  notify: reload_nginx
+

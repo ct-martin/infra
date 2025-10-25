@@ -1,0 +1,18 @@
+---
+# https://coral.ai/docs/accelerator/get-started
+- name: Add Coral repo
+  become: true
+  ansible.builtin.deb822_repository:
+    name: coral-edgetpu
+    uris: https://packages.cloud.google.com/apt
+    suites: coral-edgetpu-stable
+    components: main
+    signed_by: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+- name: Install Coral libraries
+  become: true
+  ansible.builtin.apt:
+    name:
+    - libedgetpu1-std
+    - python3-pycoral
+    state: present
+    update_cache: true

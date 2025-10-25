@@ -1,0 +1,37 @@
+---
+- name: Check if Docker daemon config exists
+  ansible.builtin.stat:
+    path: "/etc/docker/daemon.json"
+    get_checksum: no
+  register: docker_daemon_config_exists
+- name: Ensure Docker config directory exists
+  become: true
+  ansible.builtin.file:
+    path: "/etc/docker"
+    state: "directory"
+    owner: "root"
+    group: "root"
+    mode: "0755"
+- name: Write Docker config that binds ports to localhost instead of publicly
+  become: true
+  ansible.builtin.template:
+    src: "templates/docker-daemon.json.j2"
+    dest: "/etc/docker/daemon.json"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  when: not docker_daemon_config_exists.stat.exists
+- name: Merge Docker values into daemon config
+  block:
+    - name: Read Docker daemon config
+      ansible.builtin.slurp:
+        src: "/etc/docker/daemon.json"
+      register: docker_daemon_config_data
+    - name: Write Docker daemon config
+      become: true
+      ansible.builtin.copy:
+        content: "{{ docker_daemon_config_data.content|b64decode|from_json|default([])|combine({ 'ip': '127.0.0.1', 'default-network-opts': {'bridge':{'com.docker.network.bridge.host_binding_ipv4': '127.0.0.1'}} }) | to_nice_json }}" # TODO: test this works on Docker daemon configs of just `{}`
+        dest: "/etc/docker/daemon.json"
+        owner: "root"
+        group: "root"
+        mode: "0644"

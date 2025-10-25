@@ -1,0 +1,21 @@
+---
+# Note: I'd like to force remove iptables but docker declares it as a dependency
+- name: Remove iptables (outdated)
+  become: true
+  ansible.builtin.package:
+    name:
+    - ufw
+    #- iptables
+    state: absent
+- name: Install nftables & firewalld
+  become: true
+  ansible.builtin.package:
+    name:
+    - nftables
+    - firewalld
+    state: present
+  
+- include_tasks: firewalld.yml
+
+- include_tasks: docker-config.yml
+  when: "'docker' in lookup('community.general.merge_variables', '^stacks(_.+)?$', initial_value=[])"

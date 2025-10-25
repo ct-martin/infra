@@ -1,0 +1,17 @@
+---
+# WordPress CLI
+#- name: Install WordPress tools
+#  when: "'wordpress' in web_stacks|default([])"
+#  block:
+#  - name: Install Composer
+#    become: true
+#    ansible.builtin.apt:
+#      state: present
+#      name:
+#      - composer
+#  - name: Install WP-CLI
+#    become: true
+#    community.general.composer:
+#      command: require
+#      global_command: true
+#      arguments: wp-cli/wp-cli-bundle

@@ -1,0 +1,13 @@
+---
+# https://pve.proxmox.com/wiki/Qemu-guest-agent#Linux
+- name: Install QEMU Guest Agent
+  become: true
+  ansible.builtin.apt:
+    name: qemu-guest-agent
+    state: present
+- name: Start QEMU Guest Agent
+  become: true
+  ansible.builtin.systemd:
+    name: qemu-guest-agent
+    enabled: true
+    state: started
