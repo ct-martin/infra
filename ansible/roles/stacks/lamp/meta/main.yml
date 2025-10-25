@@ -1,0 +1,6 @@
+---
+dependencies:
+- role: stacks/php
+- role: stacks/mysql
+# Nginx is used instead of Apache & is a dependency of stacks/php
+# Linux is implied
