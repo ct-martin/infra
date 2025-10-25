@@ -4,6 +4,9 @@ Ansible is an automation tool for provisioning and managing computers.
 It supports a variety of platforms, however, for my purposes it's used solely for managing Linux systems.
 This playbook is used for both desktops and servers, albeit to differing degrees.
 
+> [!WARNING]
+> This is under active development; expect things to change.
+
 ## Overview
 
 The Ansible workflow roughly boils down to:
