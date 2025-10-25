@@ -1,7 +1,7 @@
 # Ansible
 
 Ansible is an automation tool for provisioning and managing computers.
-It supports a variety of playforms, however, for my purposes it's used solely for managing Linux systems.
+It supports a variety of platforms, however, for my purposes it's used solely for managing Linux systems.
 This playbook is used for both desktops and servers, albeit to differing degrees.
 
 ## Overview
@@ -11,6 +11,7 @@ The Ansible workflow roughly boils down to:
 * A "playbook" that specified which "roles" and "tasks" are applicable to different hosts, including by hostname or group
 * Various "roles" which contain "tasks" to perform
 * "Collections" of modules that can be used in "tasks"
+* "Tags" which can be used to run only a subset of roles/tasks
 
 Ansible is intended to be idempotent, meaning that it defines the end state rather than the steps to take.
 While this doesn't always work in practice without writing significantly more involved code, you will regularly see this approach used through the roles here, such as by getting state and using `when` statements.
@@ -35,6 +36,10 @@ Run against a single host or group:
 
 `ansible-playbook -l web.ctmartin.me playbooks/playbook.yml`
 
+Run only roles tagged with "stacks" against a host:
+
+`ansible-playbook -l web.ctmartin.me -t stacks playbooks/playbook.yml`
+
 Run against a host for the first time (with an atypical login):
 
 Make sure the host is in the `hosts.ini` inventory file and that any necessary host vars are set (particularly for managing logins).
@@ -53,6 +58,29 @@ Alternatively, you can manually set the password & SSH public keys, then run the
 Note that some hosts give you a temporary password and require you to manually sign in and change the password;
 Ansible (or at least this playbook) can't do that interactive workflow for you.
 
+## Stacks
+
+The role contained here introduce a concept of "stacks" (which is not native to Ansible).
+Like as used in common parlance (such as "LAMP stack"), the "stacks" roles define various tools (and configuration for those tools) to be installed/configured.
+While the roles are intended to focus on installation, they may contain configuration, be opinionated (`stacks/certbot` only supports Cloudflare DNS challenge), and/or require specific variables to be set.
+
+Some of the roles (such as `stacks/nginx`) align with the typical use of the term "stacks" whereas others (such as `stacks/hugo`) are more of tools than stacks.
+Some of the roles also have dependencies, such as `stacks/nginx` requiring `stacks/certbot`.
+
+Stacks are primarily called in my playbook by the `stacks/fromvars` role, which merges any group or host variable called `stacks` or starting with `stacks_`.
+This is necessary since variables can be overwritten (e.g. a host var called `stacks` will overwrite a group var called `stacks`) and so it's necessary to get a list of all desired stacks.
+
+As an example, in my inventory, I have the following:
+* The `vpn` group has a variable called `stacks_vpn` which declares `tailscale`
+* The `web` group has a variable called `stacks_web_all` which declares `nginx`
+* My old LAMP server had a variable called `stacks` which declared `php` & `mysql` (and was also part of the `web` group)
+
+## Tips
+
+* Running Ansible can be slow; sometimes it's useful to temporarily comment out roles or `include_tasks` statements that aren't applicable in the current run (for example, aren't being changed/affected)
+  * Adding tags helps a **lot** but sometimes this is still necessary for testing
+* Create encrypted variables with `ansible-vault encrypt_string`
+
 ## Useful Documentation
 
 (Organized in a way that I find useful; not aligned with the organization of the documentation linked to)
@@ -70,8 +98,3 @@ Ansible (or at least this playbook) can't do that interactive workflow for you.
   * [`ansible-playbook`](https://docs.ansible.com/ansible/latest/cli/ansible-playbook.html)
   * [`ansible-vault`](https://docs.ansible.com/ansible/latest/cli/ansible-vault.html) (secrets management)
 * [Jinj2 Templating](https://docs.ansible.com/ansible/latest/playbook_guide/index.html) (used for all templating and conditional statements, for example, `.j2` template files and `when` statements)
-
-## Tips
-
-* Running Ansible can be slow; sometimes it's useful to temporarily comment out roles or `include_tasks` statements that aren't applicable in the current run (for example, aren't being changed/affected)
-* Create encrypted variables with `ansible-vault encrypt_string`
