@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<zone>
+  <short>kubernetes</short>
+  <description>Interfaces for Common Kubernetes Distribution</description>
+
+  <!-- Calico (Microk8S Default) -->
+  <!-- Docs: https://docs.tigera.io/calico/latest/operations/troubleshoot/troubleshooting#configure-networkmanager -->
+  <interface name="cali+"/>
+  <interface name="vxlan.calico"/>
+  <interface name="vxlan-v6.calico"/>
+  <interface name="wireguard.cali"/>
+  <interface name="wg-v6.cali"/>
+  <interface name="tunl+"/>
+  <!-- note: TUN interfaces usually use `tun+` so I don't expect conflicts but `tunl+` is very close -->
+
+  <!-- Flannel -->
+  <!-- Docs: https://docs.rke2.io/known_issues#networkmanager -->
+  <interface name="flannel+"/>
+
+  <forward/>
+</zone>

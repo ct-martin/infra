@@ -2,5 +2,50 @@
 <zone>
   <short>docker</short>
   <description>zone for docker bridge network interfaces</description>
+  <!-- Docker will automatically register interfaces to the zone; otherwise you could use the following -->
+  <!-- <interface name="docker+"/> -->
   <forward/>
 </zone>
+{#
+Based on below, the default Docker zone looks like this:
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<zone target="ACCEPT">
+  <short>docker</short>
+  <description>zone for docker bridge network interfaces</description>
+  <forward/>
+</zone>
+```
+
+From the Docker code (in `go`):
+```go
+  dockerZone      = "docker"
+  // ...
+	dz := firewalldZone{
+		version:     "1.0",
+		name:        dockerZone,
+		description: "zone for docker bridge network interfaces",
+		target:      "ACCEPT",
+	}
+```
+
+From `firewall-cmd --zone=docker --list-all`:
+```
+docker (active)
+  target: ACCEPT
+  ingress-priority: 0
+  egress-priority: 0
+  icmp-block-inversion: no
+  interfaces: docker0
+  sources:
+  services:
+  ports:
+  protocols:
+  forward: yes
+  masquerade: no
+  forward-ports:
+  source-ports:
+  icmp-blocks:
+  rich rules:
+```
+#}

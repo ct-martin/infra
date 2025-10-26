@@ -23,6 +23,8 @@
   - tailscale
   - public
   - docker
+  - podman
+  #- kubernetes # TODO: test
 - name: "Create/override policy"
   become: true
   ansible.builtin.template:
@@ -34,7 +36,8 @@
   notify: reload_firewalld
   loop:
   - "docker-forwarding"
-  - "docker-allow-outgoing"
+  - "docker-allow-out"
+  - "docker-https-to-ts"
 - name: Enable firewalld
   become: true
   ansible.builtin.systemd:

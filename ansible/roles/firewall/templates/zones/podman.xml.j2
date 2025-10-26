@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<zone>
+  <short>podman</short>
+  <description>Podman (Docker-like Pod Manager)</description>
+  <interface name="podman+"/>
+  <!--
+      Note: this won't capture rootless pods (those running in userspace)
+      since pasta doesn't create an interface - instead, those will appear
+      similar to (insert software) listening on a port. If you run
+      `lsof -i -P -n | grep LISTEN`, the entry will have "pasta", e.g.
+
+      COMMAND     PID      USER FD   TYPE DEVICE SIZE/OFF NODE NAME
+      pasta     12345 username1  6u  IPv4 123456      0t0  TCP *:12345 (LISTEN)
+
+      If you use slirp4netns, that will create `tapN` interfaces, but is likely
+      to conflict with other software using TAP/TUN interfaces (which is a lot
+      less common than it used to be but still happens, e.g. OpenVPN).
+  -->
+  <forward/>
+</zone>

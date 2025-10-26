@@ -4,3 +4,42 @@
   <ingress-zone name="HOST"/>
   <egress-zone name="docker"/>
 </policy>
+{#
+Based on below, the default Docker policy looks like this:
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<policy version="1.0" target="ACCEPT">
+  <description>allow forwarding to the docker zone</description>
+  <ingress-zone name="ANY"/>
+  <egress-zone name="docker"/>
+</policy>
+```
+
+From the Docker code (in `go`):
+```go
+	policy := map[string]interface{}{
+		"version":       "1.0",
+		"description":   "allow forwarding to the docker zone",
+		"ingress_zones": []string{"ANY"},
+		"egress_zones":  []string{dockerZone},
+		"target":        "ACCEPT",
+	}
+```
+
+From `firewall-cmd --info-policy=docker-forwarding`:
+```
+docker-forwarding (active)
+  priority: -1
+  target: ACCEPT
+  ingress-zones: ANY
+  egress-zones: docker
+  services:
+  ports:
+  protocols:
+  masquerade: no
+  forward-ports:
+  source-ports:
+  icmp-blocks:
+  rich rules:
+```
+#}
