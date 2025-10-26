@@ -81,9 +81,22 @@ ChallengeResponseAuthentication no
 # and ChallengeResponseAuthentication to 'no'.
 UsePAM yes
 
-#AllowAgentForwarding yes
+{% if ssh_allow_tcp_forwarding|default(false) is true %}
+# Allow SSH client to access ports #and Unix sockets on this machine
+AllowTcpForwarding local
+#AllowStreamLocalForwarding local
+{% else %}
 AllowTcpForwarding no
+#AllowStreamLocalForwarding no
+PermitOpen none
+{% endif %}
+# Override default allow until have tested whether this is needed more closely
+AllowStreamLocalForwarding no
+# Don't allow reverse forwarding
 GatewayPorts no
+PermitTunnel no
+
+#AllowAgentForwarding yes
 X11Forwarding no
 #X11DisplayOffset 10
 #X11UseLocalhost yes
@@ -99,7 +112,6 @@ ClientAliveCountMax 3
 #UseDNS no
 #PidFile /var/run/sshd.pid
 MaxStartups 10:30:60
-#PermitTunnel no
 #ChrootDirectory none
 #VersionAddendum none
 
