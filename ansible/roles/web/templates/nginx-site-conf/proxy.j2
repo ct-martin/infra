@@ -8,7 +8,7 @@
 {% include "blocks/additional-domains.j2" %}
 
 server {
-{% include "blocks/detailedlog.j2" %}
+{% include "blocks/listen.j2" %}
 
         server_name {{ site.domain }};
         #root {{ site.directory if site.directory is defined and site.directory.startswith('/home') else ['/var/www/', site.directory|default(site.id)] | path_join }}/;
@@ -53,14 +53,13 @@ server {
                 proxy_set_header X-Forwarded-Proto $scheme;
                 proxy_set_header X-Forwarded-Host $host;
                 proxy_set_header X-Forwarded-Scheme $scheme;
-{% if site.proxy_ssl_verify|default(false) %}
 
+{% if site.proxy_ssl_verify|default(false) %}
                 # Require proxied server's SSL/TLS certificate to be valid & signed by a public CA
                 # (Do not use for self-signed certs)
                 proxy_ssl_verify on;
                 proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
 {% else %}
-
                 # Don't verify SSL certificate (default behavior in Nginx)
                 proxy_ssl_verify off;
 {% endif %}
@@ -77,7 +76,13 @@ server {
                 proxy_http_version 1.1;
                 #proxy_cache_bypass $http_upgrade;
 {% endif %}
+{% if site.max_upload_size is defined %}
+
+                # Max upload size
+                client_max_body_size {{ site.max_upload_size }};
+{% endif %}
 {% if site.proxy_no_buffer|default(false) %}
+
                 # Disable buffering to a temporary file
                 proxy_max_temp_file_size 0;
 {% endif %}
