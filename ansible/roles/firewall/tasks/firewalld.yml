@@ -1,4 +1,12 @@
 ---
+- name: "Remove outdated configs"
+  become: true
+  ansible.builtin.file:
+    path: "/etc/firewalld/{{ item }}.xml"
+    state: absent
+  notify: reload_firewalld
+  loop:
+  - "policies/docker-https-to-ts"
 - name: "Create/override service"
   become: true
   ansible.builtin.template:
@@ -37,7 +45,9 @@
   loop:
   - "docker-forwarding"
   - "docker-allow-out"
-  - "docker-https-to-ts"
+  - "docker-allow-to-ts"
+  #- "docker-allow-host"
+  #- "podman-forwarding"
 - name: Enable firewalld
   become: true
   ansible.builtin.systemd:
