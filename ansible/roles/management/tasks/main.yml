@@ -43,3 +43,11 @@
     loop_var: cron_item
     label: "{{ cron_item.name }}"
   when: "cron is defined and cron is truthy"
+
+# Misc
+- name: Configure Git initial branch name
+  become: true
+  community.general.git_config:
+    name: init.defaultBranch
+    scope: system
+    value: main
