@@ -14,7 +14,7 @@
     shell: /usr/bin/bash
     password: '{{user.password_hash|default("!")}}'
     create_home: true
-    groups: "{{user.groups}}"
+    groups: "{{user.groups}}" # TODO: this provides a decent way of clearing unwanted groups but probably should make aware of groups from stacks (docker, web groups, etc.)
     update_password: "{{ (user.password_overwrite|default(True) is truthy) | ternary('always','on_create') }}"
   when: "user.should_exist|default(True) is truthy"
 - name: "Add SSH Keys for {{user.username}}"
@@ -46,3 +46,27 @@
     group: "{{ user.username }}"
     mode: "0755"
   when: (role_path + '/templates/bash_aliases/' + user.username + '.j2') is ansible.builtin.file
+- name: Set Git user.name
+  become: true
+  become_user: "{{ user.username }}"
+  # Ansible doesn't like world-readable tmp files but, because of how it uploads modules,
+  # it won't work unless we do this
+  vars:
+    ansible_shell_allow_world_readable_temp: True
+  community.general.git_config:
+    name: user.name
+    scope: global
+    value: "{{ user.git_name }}"
+  when: "user.git_name is defined"
+- name: Set Git user.email
+  become: true
+  become_user: "{{ user.username }}"
+  # Ansible doesn't like world-readable tmp files but, because of how it uploads modules,
+  # it won't work unless we do this
+  vars:
+    ansible_shell_allow_world_readable_temp: True
+  community.general.git_config:
+    name: user.email
+    scope: global
+    value: "{{ user.git_name }}"
+  when: "user.git_email is defined"
