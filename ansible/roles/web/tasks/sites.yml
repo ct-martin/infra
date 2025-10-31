@@ -1,9 +1,13 @@
 ---
-# Safety check on site.id
+# Safety check on site.id and site.profile
 - name: "Check site id ({{ site.id }})"
   ansible.builtin.fail:
     msg: "site.id must match [-a-z0-9]+"
   when: "site.id is not defined or site.id is not regex('^[-a-z0-9]+$')"
+- name: "Safety check for profile"
+  ansible.builtin.fail:
+    msg: "site.profile must be defined (unable to create configuration without it)"
+  when: "site.profile is not defined"
 
 # Set up User/Group
 - name: "Set up site group ({{site.group}}, for {{ site.id }})"
