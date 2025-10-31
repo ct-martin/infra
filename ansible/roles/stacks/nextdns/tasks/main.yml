@@ -13,64 +13,26 @@
     name: nextdns
     state: present
     update_cache: true
-- name: "Check if NextDNS is configured (if config file is present)"
+- name: "Configure NextDNS"
   become: true
-  ansible.builtin.stat:
-    path: "/etc/nextdns.conf"
-  register: nextdns_config
-- name: "Do initial configuration if NextDNS has not been set up"
-  become: true
-  ansible.builtin.shell: "nextdns install -profile {{ nextdns }} -cache-size 10MB -cache-max-age 5m -max-ttl 5m -report-client-info -auto-activate -mdns disabled"
-  when: "not nextdns_config.stat.exists"
-- name: Configure NextDNS ID
-  become: true
-  lineinfile:
-    path: /etc/nextdns.conf
-    line: "profile {{ nextdns }}"
-    regexp: '^profile '
+  ansible.builtin.template:
+    src: "templates/nextdns.conf.j2"
+    dest: "/etc/nextdns.conf"
+    owner: "root"
+    group: "root"
+    mode: "0644"
   notify: restart_nextdns
-- name: Configure NextDNS Cache Size
+
+- name: Gather the package facts
+  ansible.builtin.package_facts:
+    manager: auto
+- name: Disable systemd-resolved if present
   become: true
-  lineinfile:
-    path: /etc/nextdns.conf
-    line: "cache-size 10MB"
-    regexp: '^cache-size '
-  notify: restart_nextdns
-- name: Configure NextDNS Cache Max Age
-  become: true
-  lineinfile:
-    path: /etc/nextdns.conf
-    line: "cache-max-age 5m"
-    regexp: '^cache-max-age '
-  notify: restart_nextdns
-- name: Configure NextDNS Max TTL
-  become: true
-  lineinfile:
-    path: /etc/nextdns.conf
-    line: "max-ttl 5m"
-    regexp: '^max-ttl '
-  notify: restart_nextdns
-- name: Configure NextDNS Reporting
-  become: true
-  lineinfile:
-    path: /etc/nextdns.conf
-    line: "report-client-info true"
-    regexp: '^report-client-info '
-  notify: restart_nextdns
-- name: Configure NextDNS auto-activate
-  become: true
-  lineinfile:
-    path: /etc/nextdns.conf
-    line: "auto-activate true"
-    regexp: '^auto-activate '
-  notify: restart_nextdns
-- name: Disable NextDNS mDNS
-  become: true
-  lineinfile:
-    path: /etc/nextdns.conf
-    line: "mdns disabled"
-    regexp: '^mdns '
-  notify: restart_nextdns
+  ansible.builtin.systemd:
+    name: "systemd-resolved"
+    state: stopped
+    enabled: false
+  when: "'systemd-resolved' in ansible_facts.packages"
 
 - name: Ensure NextDNS is enabled & running
   become: true

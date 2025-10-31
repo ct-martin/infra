@@ -1,0 +1,20 @@
+auto-activate true
+profile {{ nextdns }}
+cache-max-age 5m
+max-ttl 5m
+listen 0.0.0.0:53
+listen [::]:53
+cache-size 10MB
+report-client-info true
+mdns disabled
+detect-captive-portals false
+bogus-priv true
+setup-router false
+debug false
+timeout 5s
+max-inflight-requests 256
+control /var/run/nextdns.sock
+log-queries false
+discovery-dns
+hardened-privacy false
+use-hosts true
