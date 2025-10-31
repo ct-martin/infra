@@ -1,0 +1,32 @@
+---
+- name: Install Git OAuth Credential Helper
+  become: true
+  ansible.builtin.apt:
+    name:
+    - git-credential-oauth
+    state: present
+- name: Set Credential Helpers (enable cache)
+  become: true
+  community.general.git_config:
+    name: credential.helper
+    scope: system
+    value: "cache --timeout {{ git_cred_cache_duration|default('7200') }}" # 7200 is the Forgejo-recommended default (2hrs); g-c-oauth recs 21600 (6hrs)
+    add_mode: "replace-all" # TODO: make idempotent
+- name: Set Credential Helpers (enable oauth)
+  become: true
+  community.general.git_config:
+    name: credential.helper
+    scope: system
+    value: "oauth"
+    add_mode: "add" # TODO: make idempotent
+
+# Configure Git forges at the system level
+# Note that the Ansible module is a bit rudimentary in that it only supports basic syntax
+# So, for example, there isn't a good way to remove all options for a forge
+- name: Configure Git Forges on system
+  include_tasks: forge.yml
+  loop: "{{ system_git_forges }}"
+  loop_control:
+    loop_var: forge
+    label: "{{ forge.name }}"
+  when: "system_git_forges is defined"

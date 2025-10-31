@@ -1,0 +1,11 @@
+---
+- name: Configure forge credential option
+  become: true
+  community.general.git_config:
+    name: "credential.{{ forge.url|trim('/') }}.{{ forge_cred.key }}"
+    scope: system
+    value: "{{ forge_cred.value }}"
+  loop: "{{ forge.credential_config | dict2items }}"
+  loop_control:
+    loop_var: forge_cred
+  when: "forge.credential_config is defined"
