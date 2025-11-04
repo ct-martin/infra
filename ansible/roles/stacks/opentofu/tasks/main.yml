@@ -1,0 +1,8 @@
+---
+- name: Install OpenTofu
+  become: true
+  community.general.snap:
+    name:
+    - opentofu
+    state: present
+    classic: true
