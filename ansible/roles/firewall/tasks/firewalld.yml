@@ -18,6 +18,7 @@
   notify: reload_firewalld
   loop:
   - tailscale
+  - "tailscale-peer"
 - name: "Create/override zone"
   become: true
   ansible.builtin.template:
