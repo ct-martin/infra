@@ -4,7 +4,16 @@
   tags: always
   gather_facts: true
 - hosts: all
+  name: "Ensure can sudo"
+  tags: always
+  tasks:
+  - name: "Install sudo without become (if login is root)"
+    ansible.builtin.apt:
+      name: sudo
+      state: present
+    when: "ansible_user_id == 'root'"
+- hosts: all
   name: "Basic Management"
-  tags: basic
+  tags: always
   roles:
   - management
