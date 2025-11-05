@@ -5,6 +5,10 @@
   become: true
   ansible.builtin.hostname:
     name: "{{ inventory_hostname }}"
+
+# Base packages to ensure exist
+- include_tasks: packages.yml
+
 # Create/delete/update user accounts
 - include_tasks: users.yml
   loop: "{{ users|default([]) }}"
@@ -26,9 +30,6 @@
   loop:
   - ubuntu
   - debian
-
-# Base packages to ensure exist
-- include_tasks: packages.yml
 
 # Conditional packages
 - include_tasks: unattended.yml
