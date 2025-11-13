@@ -60,9 +60,10 @@ Unattended-Upgrade::Origins-Pattern {
         "site=pkgs.tailscale.com,origin=Tailscale";
         "site=repo.nextdns.io,origin=NextDNS";
         "site=cli.github.com,origin=gh";
-        "site=repos-droplet.digitalocean.com";  // DigitalOcean agent (VM stats/monitoring); does not have a proper origin/archive name :/
-        "site=repos.insights.digitalocean.com"; // DigitalOcean agent (VM stats/monitoring); does not have a proper origin/archive name :/
-        //"site=download.docker.com,..."; // TODO: determine how much of a problem this could be (service restart is less clean than most other packages)
+        "site=apt.postgresql.org";
+        "site=download.docker.com"; // TODO: determine how much of a problem this could be (service restart is less clean than most other packages)
+        // "site=repos-droplet.digitalocean.com";  // DigitalOcean agent (VM stats/monitoring); does not have a proper origin/archive name :/
+        // "site=repos.insights.digitalocean.com"; // DigitalOcean agent (VM stats/monitoring); does not have a proper origin/archive name :/
         // NOTE: do not auto-upgrade Nvidia packages (CUDA/etc.), it can cause things to unexpected break. They should be manually upgraded instead
 {#
 // FROM DEBIAN DEFAULTS:
@@ -109,6 +110,9 @@ Unattended-Upgrade::Package-Blacklist {
 
     // For more information about Python regular expressions, see
     // https://docs.python.org/3/howto/regex.html
+
+    // Don't upgrade CUDA (doesn't always do clean updates)
+    "cuda";
 };
 
 // This option controls whether the development release of Ubuntu will be
