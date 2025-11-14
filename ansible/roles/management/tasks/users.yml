@@ -14,7 +14,43 @@
     shell: /usr/bin/bash
     password: '{{user.password_hash|default("!")}}'
     create_home: true
-    groups: "{{user.groups}}" # TODO: this provides a decent way of clearing unwanted groups but probably should make aware of groups from stacks (docker, web groups, etc.)
+    groups: "{{
+        (
+          user.groups
+          + ((docker_users|default([])) is contains(user.username) | ternary(['docker'], []))
+          + ((microk8s_users|default([])) is contains(user.username) | ternary(['microk8s'], []))
+          + ((admin_accounts|default([])) is contains(user.username) | ternary(['www-data'], []))
+          + ((admin_accounts|default([])) is contains(user.username) | ternary(
+              ((sites|default([])
+              |selectattr('group','defined')).group)
+              |default([])
+            , []))
+          + ((admin_accounts|default([])) is contains(user.username) | ternary(
+              (
+                ((sites|default([])
+                |selectattr('group','none')
+                |selectattr('user','defined')).user)
+                |default([])
+              )
+            , []))
+          + (
+              ((sites|default([])
+              |selectattr('additional_group_users','defined')
+              |selectattr('additional_group_users','contains',user.username)
+              |selectattr('group','defined')).group)
+              |default([])
+            )
+          + (
+              ((sites|default([])
+              |selectattr('additional_group_users','defined')
+              |selectattr('additional_group_users','contains',user.username)
+              |selectattr('group','none')
+              |selectattr('user','defined')).user)
+              |default([])
+            )
+        )
+        | unique
+      }}" # TODO: this code makes the task aware of groups used by other roles (web, stacks) and idempotent, but is a mess. It'd be nice if there was a more elegant way to do this
     update_password: "{{ (user.password_overwrite|default(True) is truthy) | ternary('always','on_create') }}"
   when: "user.should_exist|default(True) is truthy"
 - name: "Add SSH Keys for {{user.username}}"
