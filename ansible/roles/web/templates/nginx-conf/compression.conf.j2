@@ -1,0 +1,111 @@
+{% if nginx_mod_brotli is defined and nginx_mod_brotli is truthy %}
+# Brotli is expensive to do on the fly (in real time) so keep if off for now
+{# Docs for brotli/brotli_static: https://github.com/google/ngx_brotli #}
+brotli off;
+{% endif %}
+
+# If we already have a compressed version (which needs to be generated separately) then send it instead
+# Note that this doesn't handle some situations well, e.g. `try_files` fallbacks
+{#
+# TODO: do we even want to bother to pre-compute any gzip files (since Cloudflare supports brotli)?
+# We may be better off using static brotli and then gzip for any remaining on the fly/real-time (or just having compression off)
+#}
+gzip_static on;
+{% if nginx_mod_brotli is defined and nginx_mod_brotli is truthy %}
+brotli_static on;
+{% endif %}
+
+# Configure gzip
+{# gzip on; # On by default; don't set a duplicate directive (Nginx will complain) #}
+gzip_min_length 256; # Small files don't compress well, so set an arbitrary limit
+#gzip_min_length 50; # This is Cloudflare's minimum
+
+# Media types
+#gzip_types text/html; # Default (always included)
+{#
+# TODO: What media types should we actually be compressing on the fly (in real time)?
+# By default, only text/html is compressed.
+# If we're generating compressed versions beforehand, that might be enough since most other things will be a real file?
+#}
+
+# Compatibility
+gzip_http_version 1.1; # Default; see https://serverfault.com/a/418706
+{#gzip_disable "msie6"; # This used to be needed for compatibility but that was over a decade ago #}
+
+{# From DigitalOcean's recommended config
+gzip_vary on;
+gzip_proxied any;
+gzip_comp_level 6;
+gzip_types text/plain text/css text/xml application/json text/javascript application/rss+xml application/atom+xml image/svg+xml;
+#}
+{# These are from `nginx.conf` (including being commented; are they Debian/Nginx's suggested config?)
+#gzip_vary on;
+#gzip_proxied any;
+#gzip_comp_level 6;
+#gzip_buffers 16 8k;
+#gzip_http_version 1.1;
+#gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/rss+xml text/javascript;
+#}
+
+{# For reference, this is part of a sample config given in the brotli repo:
+brotli_types application/atom+xml application/javascript application/json application/vnd.api+json application/rss+xml
+             application/vnd.ms-fontobject application/x-font-opentype application/x-font-truetype
+             application/x-font-ttf application/x-javascript application/xhtml+xml application/xml
+             font/eot font/opentype font/otf font/truetype image/svg+xml image/vnd.microsoft.icon
+             image/x-icon image/x-win-bitmap text/css text/javascript text/plain text/xml;
+#}
+{# Files Cloudflare compresses by default:
+text/html
+text/richtext
+text/plain
+text/css
+text/x-script
+text/x-component
+text/x-java-source
+text/x-markdown
+application/javascript
+application/x-javascript
+text/javascript
+text/js
+image/x-icon
+image/vnd.microsoft.icon
+application/x-perl
+application/x-httpd-cgi
+text/xml
+application/xml
+application/rss+xml
+application/vnd.api+json
+application/x-protobuf
+application/json
+multipart/bag
+multipart/mixed
+application/xhtml+xml
+font/ttf
+font/otf
+font/x-woff
+image/svg+xml
+application/vnd.ms-fontobject
+application/ttf
+application/x-ttf
+application/otf
+application/x-otf
+application/truetype
+application/opentype
+application/x-opentype
+application/font-woff
+application/eot
+application/font
+application/font-sfnt
+application/wasm
+application/javascript-binast
+application/manifest+json
+application/ld+json
+application/graphql+json
+application/geo+json
+#}
+{# Others we may care about:
+application/atom+xml, text/markdown, application/x-ndjson, application/jsonl, application/jsonlines, text/csv, text/tab-separated-values, text/vcard, text/mathml, application/vnd.mermaid
+#}
+{# More of a stretch since they're media files or could contain (likely encoded) binary data (which won't compress well):
+model/iges, model/step, model/gltf-json, model/vrml, model/obj, model/vnd.collada+xml, model/mesh, font/woff, application/x-ipynb+json
+#}

@@ -4,6 +4,11 @@
   ansible.builtin.package_facts:
     manager: auto
 # Common things
+- name: Ensure log directory is owned by Nginx user
+  become: true
+  ansible.builtin.file:
+    path: "/var/log/nginx"
+    owner: "www-data"
 - name: Add additional MIME types
   become: true
   ansible.builtin.template:
@@ -19,6 +24,16 @@
   ansible.builtin.template:
     src: "nginx-conf/utf8.conf.j2"
     dest: "/etc/nginx/conf.d/utf8.conf"
+    owner: root
+    group: www-data
+    mode: '0644'
+    validate: bash -c 'echo "include /etc/nginx/modules-enabled/*.conf; events { worker_connections 64; } http { include %s; }" > /tmp/nginx.conf; sudo nginx -T -c /tmp/nginx.conf && rm -f /tmp/nginx.conf'
+  notify: reload_nginx
+- name: "Enable/Configure Compression"
+  become: true
+  ansible.builtin.template:
+    src: "nginx-conf/compression.conf.j2"
+    dest: "/etc/nginx/conf.d/compression.conf"
     owner: root
     group: www-data
     mode: '0644'
