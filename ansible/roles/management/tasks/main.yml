@@ -5,13 +5,38 @@
   become: true
   ansible.builtin.hostname:
     name: "{{ inventory_hostname }}"
+- name: "Force DNS servers, if requested, via config"
+  become: true
+  ansible.builtin.template:
+    src: resolv.conf.j2
+    dest: /etc/resolv.conf.tail
+    owner: root
+    group: root
+    mode: '0644'
+  when: "resolv_force_dns is defined and resolv_force_dns is truthy"
+- name: "Force DNS servers, if requested, one-off"
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/resolv.conf
+    line: 'nameserver {{ resolv_force_dns }}'
+    state: present
+  when: "resolv_force_dns is defined and resolv_force_dns is truthy"
 
 # Base packages to ensure exist
 - include_tasks: packages.yml
 
+# Get groups
+#- name: Get available groups
+#  become: true
+#  ansible.builtin.getent:
+#    database: group
+#    split: ":"
+#- ansible.builtin.debug:
+#    var: "ansible_facts.getent_group|dict2items|map(attribute='key')"
+
 # Create/delete/update user accounts
 - include_tasks: users.yml
-  loop: "{{ users|default([]) }}"
+  loop: "{{ lookup('community.general.merge_variables', '^users(_.+)?$', initial_value=[]) }}"
   loop_control:
     loop_var: user
     label: "{{ user.username }}"
