@@ -6,13 +6,15 @@
     remove: true
     state: absent
   when: "user.should_exist|default(True) is falsy"
-- name: Create user {{ user.username }}
+- name: "Create/update user {{ user.username }}"
   become: true
   ansible.builtin.user:
     name: "{{user.username}}"
     state: present
     shell: /usr/bin/bash
     password: '{{user.password_hash|default("!")}}'
+    password_lock: "{{ (user.locked|default(false)) is truthy }}"
+    expires: "{{ (user.locked|default(false)) is truthy | ternary(1,-1) }}"
     create_home: true
     groups: "{{
         (
@@ -49,7 +51,7 @@
               |default([])
             )
         )
-        | unique
+        | unique | intersect(ansible_facts.getent_group|dict2items|map(attribute='key'))
       }}" # TODO: this code makes the task aware of groups used by other roles (web, stacks) and idempotent, but is a mess. It'd be nice if there was a more elegant way to do this
     update_password: "{{ (user.password_overwrite|default(True) is truthy) | ternary('always','on_create') }}"
   when: "user.should_exist|default(True) is truthy"
