@@ -57,7 +57,7 @@
   register: certbot_has_account
 - name: Register with Certbot if no account
   become: true
-  ansible.builtin.shell: certbot register --email admin@ctmartin.dev,admin@ctmartin.me --no-eff-email --agree-tos
+  ansible.builtin.shell: "certbot register --email {{ certbot_email }} --no-eff-email --agree-tos"
   when: "not certbot_has_account.stat.exists"
 - name: Create Certbot certificate directories
   become: true
