@@ -105,7 +105,7 @@ server {
 
         # Don't allow .php files in the uploads/ folder
         location ~ /wp-content/uploads/ {
-                location ~* \.php$ {
+                location ~* \.php[0-9]?$ {
                         deny all;
                 }
         }
@@ -118,7 +118,7 @@ server {
         #}
 
         # Block PHP files in uploads/ (alternative to above)
-        location ~* ^/wp-content/uploads/.*.php$ {
+        location ~* ^/wp-content/uploads/.*\.php[0-9]?$ {
                 return 403;
         }
 
