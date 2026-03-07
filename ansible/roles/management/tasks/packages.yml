@@ -16,6 +16,7 @@
     - ca-certificates
     - curl
     - git
+    - git-lfs
     - htop
     - less
     - make
