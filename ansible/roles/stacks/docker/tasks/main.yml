@@ -31,6 +31,30 @@
 #    state: started
 #    enabled: true
 
+- name: Create Docker cleanup service
+  become: true
+  ansible.builtin.template:
+    src: docker-cleanup.service.j2
+    dest: /etc/systemd/system/docker-cleanup.service
+    owner: root
+    group: root
+    mode: '0644'
+- name: Create Docker cleanup timer
+  become: true
+  ansible.builtin.template:
+    src: docker-cleanup.timer.j2
+    dest: /etc/systemd/system/docker-cleanup.timer
+    owner: root
+    group: root
+    mode: '0644'
+- name: Start & Enable Docker cleanup timer
+  become: true
+  ansible.builtin.systemd:
+    name: docker-cleanup.timer
+    daemon_reload: true
+    state: started
+    enabled: true
+
 # Grant docker group/permissions to specified users
 # TODO: removing permissions
 - name: Give user {{ item }} Docker management rights

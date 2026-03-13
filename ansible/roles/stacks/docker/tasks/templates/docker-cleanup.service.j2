@@ -1,0 +1,11 @@
+[Unit]
+Description=Regular cleanup of Docker images to free up disk space
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/docker image prune -af
+
+[Install]
+WantedBy=default.target

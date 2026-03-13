@@ -1,0 +1,9 @@
+[Unit]
+Description=Regular cleanup of Docker images to free up disk space
+
+[Timer]
+OnCalendar=weekly
+Unit=docker-cleanup.service
+
+[Install]
+WantedBy=timers.target
