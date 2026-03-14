@@ -1,0 +1,7 @@
+{% if site.search_from_root_rewrite is defined %}
+{% for param in (site.search_from_root_params|default(['s','q','search'])) %}
+        if ($arg_{{param}}) {
+          rewrite ^/$ {{ site.search_from_root_rewrite }}{% if param != (site.search_from_root_to_param|default('s')) %}{{site.search_from_root_to_param|default('s')}}?=$arg_{{param}}{% endif %} redirect;
+        }
+{% endfor %}
+{% endif %}

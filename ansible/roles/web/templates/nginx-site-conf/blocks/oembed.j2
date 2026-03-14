@@ -1,0 +1,44 @@
+{% if site.oembed_spoof|default(false) %}
+        # OEmbed "API"
+        # Rewrites requests to the "API" to static files with the data that would be returned for a real API
+        # Note: does not support height/width parameters. This goes against spec but several large services do anyway.
+        #
+        # TODO: XML format support
+        #
+        # This "API" will recognize page-like paths such as:
+        # * https://example.com/ (root)
+        # * https://example.com/foo (no trailing slash)
+        # * https://example.com/foo/ (final trailing slash)
+        # * https://example.com/foo/index.html (index page)
+        # * https://example.com/foo/bar/
+        #
+        # ...and will not match static file-like paths such as:
+        # * https://example.com/foo.png
+        # * https://example.com/foo.html
+        #
+        location ~* ^/oembed(\.(?<oeformat>json|xml))?$ {
+                #add_header Content-Type "text/plain";
+                # Use regex named captures to get the domain path from the ?url= parameter
+                if ($arg_url ~* "^https?:\/\/(?<oeurldomain>[.a-z0-9-]+)\/(?<oeurlpath>[a-z0-9\/-]*[a-z0-9-])?(\/?(index.html)?)?$") {
+                        # Set variables with parsed out data
+                        set $oedomain $oeurldomain;
+                        set $oepath $oeurlpath;
+                        #return 200 "$oedomain $server_name $oepath";
+                }
+                # If the requested URL is not from the same domain as is being served, deny it
+                # (Prevents requests like https://ctmartin.dev/oembed?url=https://example.com/ )
+                if ($oedomain != $server_name) {
+                        return 401; #"$oedomain != $hostname";
+                }
+                # Set format if not specified
+                if ($oeformat !~ (json|xml)) {
+                        set $oeformat "json";
+                }
+                # Rewrite to the static file
+                #if ($oepath) {
+                        rewrite ^/oembed(\.json|xml)?$ /$oepath/oembed.json last;
+                #}
+                # If the path isn't matched, return 404
+                #return 404; #"Unknown $oepath";
+        }
+{% endif %}
