@@ -26,11 +26,11 @@
 - include_tasks: packages.yml
 
 # Get groups
-#- name: Get available groups
-#  become: true
-#  ansible.builtin.getent:
-#    database: group
-#    split: ":"
+- name: Get available groups
+  become: true
+  ansible.builtin.getent:
+    database: group
+    split: ":"
 #- ansible.builtin.debug:
 #    var: "ansible_facts.getent_group|dict2items|map(attribute='key')"
 
