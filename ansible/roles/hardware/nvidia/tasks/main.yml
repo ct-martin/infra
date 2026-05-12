@@ -56,23 +56,24 @@
     name: cuda
     selection: hold
 
-# Install cuDNN
-- name: Ensure cuDNN is installed
+# Install cuBLAS & cuDNN
+- name: Ensure cuBLAS and cuDNN are installed
   become: true
   ansible.builtin.apt:
     name:
+    - cublas
     - cudnn
     #- libcudnn8 # some libraries like ctranslate2 use outdated version
 
 # Install cuBLAS/HPC
-- name: Ensure cuBLAS/HPC repository is configured
+- name: Ensure Nvidia HPC repository is configured
   become: true
   ansible.builtin.deb822_repository:
     name: nvhpc
     uris: "https://developer.download.nvidia.com/hpc-sdk/{{ ansible_distribution | lower }}/{{ ansible_architecture }}"
     suites: "/"
     signed_by: "https://developer.download.nvidia.com/hpc-sdk/ubuntu/DEB-GPG-KEY-NVIDIA-HPC-SDK"
-- name: Ensure cuBLAS/HPC is installed
+- name: Ensure nvhpc is installed
   become: true
   ansible.builtin.apt:
     name:
