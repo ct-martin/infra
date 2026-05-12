@@ -77,3 +77,12 @@
     name: init.defaultBranch
     scope: system
     value: main
+- name: Set env vars to tell apps to respect privacy
+  become: true
+  ansible.builtin.template:
+    src: "templates/privacy.bashrc.j2"
+    dest: "/etc/profile.d/privacy.sh"
+    owner: "root"
+    group: "root"
+    mode: "0755"
+  when: "privacy|default(True) is truthy"
