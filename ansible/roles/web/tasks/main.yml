@@ -9,6 +9,12 @@
   ansible.builtin.file:
     path: "/var/log/nginx"
     owner: "www-data"
+  register: "nginx_log_perms"
+- name: Tell dpkg log directory perms should not be changed on package update
+  become: true
+  ansible.builtin.command:
+    cmd: "dpkg-statoverride --update --add www-data adm 755 /var/log/nginx"
+  when: "nginx_log_perms.changed"
 - name: Add additional MIME types
   become: true
   ansible.builtin.template:
