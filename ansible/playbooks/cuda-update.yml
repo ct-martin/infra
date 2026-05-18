@@ -1,0 +1,30 @@
+---
+- hosts: all
+  name: "Setup"
+  tags: always
+  gather_facts: true
+# CUDA doesn't always update versions cleanly
+# Doing `apt purge`+`apt autoremove`+`apt install` is cleaner than `apt upgrade`
+- hosts: nvidia
+  name: "Remove existing CUDA"
+  tags: hardware
+  tasks:
+  - name: "Purge and remove existing CUDA version"
+    become: true
+    ansible.builtin.apt:
+      name:
+      - "cuda"
+      - "cuda-[1234567890]*"
+      state: absent
+      purge: true
+      allow_change_held_packages: true
+      autoremove: true
+  - name: Gather package facts
+    ansible.builtin.package_facts:
+      manager: auto
+- name: Setup Nvidia hardware
+  hosts: nvidia
+  tags: hardware
+  roles:
+  - hardware/ubuntu-hwe
+  - hardware/nvidia
