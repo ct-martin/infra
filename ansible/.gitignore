@@ -1,1 +1,9 @@
+# Generic ignores
 venv
+.venv
+
+# Don't commit inventory (may contain secrets)
+inventory
+
+# Misc. ignores
+**/archive/
