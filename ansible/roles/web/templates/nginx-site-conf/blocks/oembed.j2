@@ -19,7 +19,7 @@
         location ~* ^/oembed(\.(?<oeformat>json|xml))?$ {
                 #add_header Content-Type "text/plain";
                 # Use regex named captures to get the domain path from the ?url= parameter
-                if ($arg_url ~* "^https?:\/\/(?<oeurldomain>[.a-z0-9-]+)\/(?<oeurlpath>[a-z0-9\/-]*[a-z0-9-])?(\/?(index.html)?)?$") {
+                if ($arg_url ~* "^https?(:|%3a)(\/|%2f){2}(?<oeurldomain>[.a-z0-9-]+)(\/|%2f)(?<oeurlpath>[a-z0-9\/-]*[a-z0-9-])?(\/?(index.html)?)?$") {
                         # Set variables with parsed out data
                         set $oedomain $oeurldomain;
                         set $oepath $oeurlpath;
@@ -27,16 +27,20 @@
                 }
                 # If the requested URL is not from the same domain as is being served, deny it
                 # (Prevents requests like https://ctmartin.dev/oembed?url=https://example.com/ )
-                if ($oedomain != $server_name) {
-                        return 401; #"$oedomain != $hostname";
+                if ($oedomain != $host) {
+                        return 401; #"$oedomain != $host ($arg_url; $oedomain)";
                 }
-                # Set format if not specified
+                # Fallback format to URL arg
+                if ($oeformat !~ (json|xml)) {
+                        set $oeformat $arg_format;
+                }
+                # Set format if invalid or not specified
                 if ($oeformat !~ (json|xml)) {
                         set $oeformat "json";
                 }
                 # Rewrite to the static file
                 #if ($oepath) {
-                        rewrite ^/oembed(\.json|xml)?$ /$oepath/oembed.json last;
+                        rewrite ^/oembed(\.json|xml)?$ /$oepath/oembed.$oeformat last;
                 #}
                 # If the path isn't matched, return 404
                 #return 404; #"Unknown $oepath";
